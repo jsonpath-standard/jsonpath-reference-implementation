@@ -1,0 +1,5 @@
+tests:
+    - name: root
+      selector: "$"
+      document: ["first", "second"]
+      result: [["first", "second"]]

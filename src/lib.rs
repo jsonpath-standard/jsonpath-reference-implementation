@@ -1,7 +1,7 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+/*
+ * Copyright 2020 VMware, Inc.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
+pub mod jsonpath;
