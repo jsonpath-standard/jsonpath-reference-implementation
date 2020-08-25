@@ -4,25 +4,20 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use serde_json::Value;
+use crate::parser;
+use crate::path::Path;
 
 #[derive(Debug)]
-pub enum SyntaxError {
-    Message(String),
+pub struct SyntaxError {
+    message: String,
 }
 
-fn err(message: &str) -> Result<&dyn Path, SyntaxError> {
-    Err(SyntaxError::Message(message.to_string()))
+impl std::fmt::Display for SyntaxError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(f, "{}", self.message)
+    }
 }
 
-pub fn parse(_selector: &str) -> Result<&dyn Path, SyntaxError> {
-    err("not implemented")
-}
-
-pub enum FindError {
-    // no errors yet
-}
-
-pub trait Path {
-    fn find(&self, document: Value) -> Result<Vec<Value>, FindError>;
+pub fn parse(selector: &str) -> Result<Box<dyn Path>, SyntaxError> {
+    parser::parse(selector).map_err(|m| SyntaxError { message: m })
 }

@@ -43,7 +43,8 @@ mod tests {
                 let path = jsonpath::parse(&t.selector);
                 assert!(
                     path.is_ok(),
-                    "parse failed: {:?}",
+                    "parsing {} failed: {}",
+                    t.selector,
                     path.err().expect("should be an error")
                 );
 
@@ -52,7 +53,12 @@ mod tests {
                         p.find(as_json_value(&t.document).expect("invalid document"))
                     {
                         if result != as_json_value_array(&t.result).expect("invalid result") {
-                            assert!(false, "incorrect result")
+                            assert!(
+                                false,
+                                "incorrect result, expected: {:?}, got: {:?}",
+                                as_json_value_array(&t.result).unwrap(),
+                                result
+                            )
                         }
                     } else {
                         assert!(false, "find failed") // should not happen
