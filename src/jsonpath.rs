@@ -8,7 +8,7 @@ use serde_json::Value;
 
 #[derive(Debug)]
 pub enum SyntaxError {
-    Message(String)
+    Message(String),
 }
 
 fn err(message: &str) -> Result<&dyn Path, SyntaxError> {

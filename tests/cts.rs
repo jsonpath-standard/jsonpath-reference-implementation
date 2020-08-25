@@ -6,10 +6,10 @@
 
 #[cfg(test)]
 mod tests {
+    use jsonpath_ri::jsonpath;
     use serde::{Deserialize, Serialize};
     use std::fs;
     use std::panic;
-    use jsonpath_ri::jsonpath;
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct TestSuite {
@@ -41,10 +41,16 @@ mod tests {
                     as_json(&t.result).expect("invalid result")
                 );
                 let path = jsonpath::parse(&t.selector);
-                assert!(path.is_ok(), "parse failed: {:?}", path.err().expect("should be an error"));
+                assert!(
+                    path.is_ok(),
+                    "parse failed: {:?}",
+                    path.err().expect("should be an error")
+                );
 
                 if let Ok(p) = path {
-                    if let Ok(result) = p.find(as_json_value(&t.document).expect("invalid document")) {
+                    if let Ok(result) =
+                        p.find(as_json_value(&t.document).expect("invalid document"))
+                    {
                         if result != as_json_value_array(&t.result).expect("invalid result") {
                             assert!(false, "incorrect result")
                         }
@@ -96,7 +102,9 @@ mod tests {
 
             serde_yaml::Value::Bool(b) => Ok(serde_json::Value::Bool(*b)),
 
-            serde_yaml::Value::Number(num) => Ok(serde_json::Value::Number(yaml_number_as_json(num.clone()))),
+            serde_yaml::Value::Number(num) => {
+                Ok(serde_json::Value::Number(yaml_number_as_json(num.clone())))
+            }
 
             serde_yaml::Value::String(s) => Ok(serde_json::Value::String(s.clone())),
 
@@ -109,7 +117,10 @@ mod tests {
 
             serde_yaml::Value::Mapping(map) => {
                 let object_members = map.iter().map(|(k, v)| {
-                    (serde_yaml::to_string(k).expect("non-string mapping key"), as_json_value(v).expect("invalid map value"))
+                    (
+                        serde_yaml::to_string(k).expect("non-string mapping key"),
+                        as_json_value(v).expect("invalid map value"),
+                    )
                 });
                 Ok(serde_json::Value::Object(object_members.collect()))
             }
@@ -124,7 +135,7 @@ mod tests {
                     .map(|v| as_json_value(v).expect("invalid sequence element"));
                 Ok(array_elements.collect())
             }
-            _ => Err("not a sequence".to_string())
+            _ => Err("not a sequence".to_string()),
         }
     }
 
@@ -134,7 +145,8 @@ mod tests {
         } else if n.is_u64() {
             serde_json::Number::from(n.as_u64().expect("invalid u64 in YAML"))
         } else {
-            serde_json::Number::from_f64(n.as_f64().expect("invalid f64 in YAML")).expect("invalid f64 for JSON")
+            serde_json::Number::from_f64(n.as_f64().expect("invalid f64 in YAML"))
+                .expect("invalid f64 for JSON")
         }
     }
 }
