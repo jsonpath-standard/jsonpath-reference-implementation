@@ -1,0 +1,10 @@
+selector = _{ SOI ~ jsonPath ~ EOI }
+
+jsonPath = ${ rootSelector ~ matcher* }
+rootSelector = { "$" }
+
+matcher = { dotChild }
+
+dotChild = { ".*" }
+
+WHITESPACE = _{ " " }
