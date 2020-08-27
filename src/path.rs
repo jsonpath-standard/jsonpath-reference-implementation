@@ -11,5 +11,5 @@ pub enum FindError {
 }
 
 pub trait Path {
-    fn find(&self, document: Value) -> Result<Vec<Value>, FindError>;
+    fn find<'a>(&self, document: &'a Value) -> Result<Vec<&'a Value>, FindError>;
 }

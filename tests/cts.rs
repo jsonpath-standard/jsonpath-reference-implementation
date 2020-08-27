@@ -54,9 +54,12 @@ mod tests {
 
                 if let Ok(p) = path {
                     if let Ok(result) =
-                        p.find(as_json_value(&t.document).expect("invalid document"))
+                        p.find(&as_json_value(t.document).expect("invalid document"))
                     {
-                        if result != as_json_value_array(&t.result).expect("invalid result") {
+                        if !equal(
+                            &result,
+                            as_json_value_array(&t.result).expect("invalid result"),
+                        ) {
                             assert!(
                                 false,
                                 "incorrect result, expected: {:?}, got: {:?}",
@@ -74,6 +77,16 @@ mod tests {
             }
         }
         assert!(errors.is_empty())
+    }
+
+    fn equal(actual: &Vec<&serde_json::Value>, expected: Vec<serde_json::Value>) -> bool {
+        if actual.len() != expected.len() {
+            false
+        } else {
+            (0..actual.len()).fold(true, |result, item| {
+                result && actual[item] == &expected[item]
+            })
+        }
     }
 
     fn as_json(v: &serde_yaml::Value) -> Result<String, String> {
@@ -106,11 +119,11 @@ mod tests {
         }
     }
 
-    fn as_json_value(v: &serde_yaml::Value) -> Result<serde_json::Value, String> {
+    fn as_json_value(v: serde_yaml::Value) -> Result<serde_json::Value, String> {
         match v {
             serde_yaml::Value::Null => Ok(serde_json::Value::Null),
 
-            serde_yaml::Value::Bool(b) => Ok(serde_json::Value::Bool(*b)),
+            serde_yaml::Value::Bool(b) => Ok(serde_json::Value::Bool(b)),
 
             serde_yaml::Value::Number(num) => {
                 Ok(serde_json::Value::Number(yaml_number_as_json(num.clone())))
@@ -129,7 +142,7 @@ mod tests {
                 let object_members = map.iter().map(|(k, v)| {
                     (
                         serde_yaml::to_string(k).expect("non-string mapping key"),
-                        as_json_value(v).expect("invalid map value"),
+                        as_json_value(v.clone()).expect("invalid map value"),
                     )
                 });
                 Ok(serde_json::Value::Object(object_members.collect()))
@@ -142,7 +155,7 @@ mod tests {
             serde_yaml::Value::Sequence(seq) => {
                 let array_elements = seq
                     .into_iter()
-                    .map(|v| as_json_value(v).expect("invalid sequence element"));
+                    .map(|v| as_json_value(v.clone()).expect("invalid sequence element"));
                 Ok(array_elements.collect())
             }
             _ => Err("not a sequence".to_string()),

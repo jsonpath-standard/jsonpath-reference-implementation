@@ -38,14 +38,14 @@ pub fn parse(selector: &str) -> Result<Box<dyn Path>, String> {
 }
 
 impl Path for SelectorPath<'_> {
-    fn find(&self, document: Value) -> Result<Vec<Value>, FindError> {
+    fn find<'a>(&self, document: &'a Value) -> Result<Vec<&'a Value>, FindError> {
         let mut nodes = Vec::new();
         nodes.push(document);
 
         // pass nodes through each matcher in turn
-        for m in self.matchers.clone() {
+        for m in &self.matchers {
             let mut selected = Vec::new();
-            for n in nodes.clone() {
+            for n in &nodes {
                 for r in m.select(n) {
                     selected.push(r);
                 }
