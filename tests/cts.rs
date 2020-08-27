@@ -11,6 +11,8 @@ mod tests {
     use std::fs;
     use std::panic;
 
+    const VERBOSE: bool = false;
+
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct TestSuite {
         tests: Vec<Testcase>,
@@ -33,13 +35,15 @@ mod tests {
         let mut errors: Vec<String> = Vec::new();
         for t in suite.tests {
             let result = panic::catch_unwind(|| {
-                println!(
-                    "name = {}, selector = {}, document = {}, result = {}",
-                    t.name,
-                    t.selector,
-                    as_json(&t.document).expect("invalid document"),
-                    as_json(&t.result).expect("invalid result")
-                );
+                if VERBOSE {
+                    println!(
+                        "name = {}, selector = {}, document = {}, result = {}",
+                        t.name,
+                        t.selector,
+                        as_json(&t.document).expect("invalid document"),
+                        as_json(&t.result).expect("invalid result")
+                    );
+                }
                 let path = jsonpath::parse(&t.selector);
                 assert!(
                     path.is_ok(),
