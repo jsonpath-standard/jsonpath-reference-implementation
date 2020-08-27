@@ -43,10 +43,10 @@ impl Path for SelectorPath<'_> {
         nodes.push(document);
 
         // pass nodes through each matcher in turn
-        for m in self.matchers.clone().into_iter() {
+        for m in self.matchers.clone() {
             let mut selected = Vec::new();
-            for n in nodes.clone().into_iter() {
-                for r in m.select(n).into_iter() {
+            for n in nodes.clone() {
+                for r in m.select(n) {
                     selected.push(r);
                 }
             }
