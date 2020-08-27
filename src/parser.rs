@@ -38,21 +38,18 @@ pub fn parse(selector: &str) -> Result<Box<dyn Path>, String> {
 }
 
 impl Path for SelectorPath<'_> {
-    fn find(&self, document: Value) -> Result<Vec<Value>, FindError> {
-        let mut nodes = Vec::new();
-        nodes.push(document);
-
-        // pass nodes through each matcher in turn
-        for m in self.matchers.clone().into_iter() {
-            let mut selected = Vec::new();
-            for n in nodes.clone().into_iter() {
-                for r in m.select(n).into_iter() {
-                    selected.push(r);
-                }
-            }
-            nodes = selected;
-        }
-
-        Ok(nodes)
+    fn find<'a>(&self, document: &'a Value) -> Result<Vec<&'a Value>, FindError> {
+        // pass nodes, starting with document alone, through each matcher in turn
+        Ok((&self.matchers)
+            .iter()
+            .fold(doc_node(document), |nodes, matcher| {
+                nodes.iter().flat_map(|node| matcher.select(node)).collect()
+            }))
     }
+}
+
+fn doc_node<'a>(document: &'a Value) -> Vec<&'a Value> {
+    let mut nodes = Vec::new();
+    nodes.push(document);
+    nodes
 }
