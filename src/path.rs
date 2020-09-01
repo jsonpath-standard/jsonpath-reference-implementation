@@ -28,14 +28,8 @@ impl Path for SelectorPath<'_> {
         // pass nodes, starting with document alone, through each matcher in turn
         Ok((&self.matchers)
             .iter()
-            .fold(doc_node(document), |nodes, matcher| {
+            .fold(vec![document], |nodes, matcher| {
                 nodes.iter().flat_map(|node| matcher.select(node)).collect()
             }))
     }
-}
-
-fn doc_node<'a>(document: &'a Value) -> Vec<&'a Value> {
-    let mut nodes = Vec::new();
-    nodes.push(document);
-    nodes
 }
