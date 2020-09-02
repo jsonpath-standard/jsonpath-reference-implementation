@@ -3,6 +3,10 @@ tests:
       selector: "$"
       document: ["first", "second"]
       result: [["first", "second"]]
+    - name: dot_child
+      selector: "$.a"
+      document: {"a" : "A", "b" : "B"}
+      result: ["A"]
     - name: wildcarded_child
       selector: "$.*"
       document: {"a" : "A", "b" : "B"}

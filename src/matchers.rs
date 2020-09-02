@@ -32,3 +32,21 @@ impl Matcher for WildcardedChild {
         }
     }
 }
+
+pub struct DotChild {
+    name: String,
+}
+
+pub fn new_dot_child_matcher(name: String) -> DotChild {
+    DotChild { name }
+}
+
+impl Matcher for DotChild {
+    fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+        if node.is_object() {
+            Box::new(iter::once(&node.as_object().unwrap()[&self.name]))
+        } else {
+            Box::new(iter::empty())
+        }
+    }
+}
