@@ -5,6 +5,7 @@ rootSelector = { "$" }
 
 matcher = { dotChild }
 
-dotChild = { ".*" }
+dotChild = _{ wildcardedDotChild }
+wildcardedDotChild = { ".*" }
 
 WHITESPACE = _{ " " }

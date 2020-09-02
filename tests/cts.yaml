@@ -3,3 +3,7 @@ tests:
       selector: "$"
       document: ["first", "second"]
       result: [["first", "second"]]
+    - name: wildcarded_child
+      selector: "$.*"
+      document: {"a" : "A", "b" : "B"}
+      result: ["A", "B"]
