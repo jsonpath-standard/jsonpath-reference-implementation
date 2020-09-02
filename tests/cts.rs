@@ -62,7 +62,8 @@ mod tests {
                         ) {
                             assert!(
                                 false,
-                                "incorrect result, expected: {:?}, got: {:?}",
+                                "incorrect result for {}, expected: {:?}, got: {:?}",
+                                t.name,
                                 as_json_value_array(&t.result).unwrap(),
                                 result
                             )
@@ -140,8 +141,14 @@ mod tests {
 
             serde_yaml::Value::Mapping(map) => {
                 let object_members = map.iter().map(|(k, v)| {
+                    println!(
+                        ">>>>>>>>> k={:?}, v={:?}, serde_json::to_string(k)={:?}",
+                        k,
+                        v,
+                        serde_json::to_string(k).expect("bananas")
+                    );
                     (
-                        serde_yaml::to_string(k).expect("non-string mapping key"),
+                        serde_json::to_string(k).expect("non-string mapping key"),
                         as_json_value(v.clone()).expect("invalid map value"),
                     )
                 });

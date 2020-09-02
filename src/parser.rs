@@ -12,7 +12,6 @@ use crate::pest::Parser;
 #[grammar = "grammar.pest"]
 struct PathParser;
 
-#[allow(clippy::single_match)]
 pub fn parse(selector: &str) -> Result<Box<dyn path::Path>, String> {
     let selector_rule = PathParser::parse(Rule::selector, selector)
         .map_err(|e| format!("{}", e))?
@@ -22,12 +21,19 @@ pub fn parse(selector: &str) -> Result<Box<dyn path::Path>, String> {
     let mut ms: Vec<&dyn matchers::Matcher> = Vec::new();
     for r in selector_rule.into_inner() {
         match r.as_rule() {
-            Rule::rootSelector => {
-                ms.push(&matchers::RootSelector {});
-            }
+            Rule::rootSelector => ms.push(&matchers::RootSelector {}),
+            Rule::matcher => parse_matcher(r, &mut ms),
             _ => println!("r={:?}", r),
         }
     }
 
     Ok(Box::new(path::new(ms)))
+}
+
+fn parse_matcher(matcher_rule: pest::iterators::Pair<Rule>, ms: &mut Vec<&dyn matchers::Matcher>) {
+    for r in matcher_rule.into_inner() {
+        if let Rule::wildcardedDotChild = r.as_rule() {
+            ms.push(&matchers::WildcardedChild {});
+        }
+    }
 }
