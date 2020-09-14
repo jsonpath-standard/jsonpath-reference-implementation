@@ -44,7 +44,12 @@ pub fn new_dot_child_matcher(name: String) -> DotChild {
 impl Matcher for DotChild {
     fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
         if node.is_object() {
-            Box::new(iter::once(&node.as_object().unwrap()[&self.name]))
+            let mapping = node.as_object().unwrap();
+            if mapping.contains_key(&self.name) {
+                Box::new(iter::once(&mapping[&self.name]))
+            } else {
+                Box::new(iter::empty())
+            }
         } else {
             Box::new(iter::empty())
         }
