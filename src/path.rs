@@ -15,15 +15,15 @@ pub trait Path {
     fn find<'a>(&self, document: &'a Value) -> Result<Vec<&'a Value>, FindError>;
 }
 
-struct SelectorPath<'a> {
-    matchers: Vec<&'a dyn matchers::Matcher>,
+struct SelectorPath {
+    matchers: Vec<Box<dyn matchers::Matcher>>,
 }
 
-pub fn new<'a>(matchers: Vec<&'a dyn matchers::Matcher>) -> impl Path + 'a {
+pub fn new<'a>(matchers: Vec<Box<dyn matchers::Matcher>>) -> impl Path + 'a {
     SelectorPath { matchers }
 }
 
-impl Path for SelectorPath<'_> {
+impl Path for SelectorPath {
     fn find<'a>(&self, document: &'a Value) -> Result<Vec<&'a Value>, FindError> {
         // pass nodes, starting with document alone, through each matcher in turn
         Ok((&self.matchers)

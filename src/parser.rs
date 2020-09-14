@@ -12,17 +12,21 @@ use crate::pest::Parser;
 #[grammar = "grammar.pest"]
 struct PathParser;
 
-pub fn parse(selector: &str) -> Result<Box<dyn path::Path>, String> {
+pub fn parse<'a>(selector: &'a str) -> Result<Box<dyn path::Path + 'a>, String> {
     let selector_rule = PathParser::parse(Rule::selector, selector)
         .map_err(|e| format!("{}", e))?
         .next()
         .unwrap();
 
-    let mut ms: Vec<&dyn matchers::Matcher> = Vec::new();
+    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
     for r in selector_rule.into_inner() {
         match r.as_rule() {
-            Rule::rootSelector => ms.push(&matchers::RootSelector {}),
-            Rule::matcher => parse_matcher(r, &mut ms),
+            Rule::rootSelector => ms.push(Box::new(matchers::RootSelector {})),
+            Rule::matcher => {
+                for m in parse_matcher(r) {
+                    ms.push(m)
+                }
+            }
             _ => println!("r={:?}", r),
         }
     }
@@ -30,10 +34,32 @@ pub fn parse(selector: &str) -> Result<Box<dyn path::Path>, String> {
     Ok(Box::new(path::new(ms)))
 }
 
-fn parse_matcher(matcher_rule: pest::iterators::Pair<Rule>, ms: &mut Vec<&dyn matchers::Matcher>) {
+fn parse_matcher(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
+    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
     for r in matcher_rule.into_inner() {
-        if let Rule::wildcardedDotChild = r.as_rule() {
-            ms.push(&matchers::WildcardedChild {});
+        match r.as_rule() {
+            Rule::wildcardedDotChild => ms.push(Box::new(matchers::WildcardedChild {})),
+            Rule::namedDotChild => {
+                for m in parse_dot_child_matcher(r) {
+                    ms.push(m)
+                }
+            }
+            _ => (),
         }
     }
+    ms
+}
+
+fn parse_dot_child_matcher(
+    matcher_rule: pest::iterators::Pair<Rule>,
+) -> Vec<Box<dyn matchers::Matcher>> {
+    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
+    for r in matcher_rule.into_inner() {
+        if let Rule::childName = r.as_rule() {
+            ms.push(Box::new(matchers::new_dot_child_matcher(
+                r.as_str().to_owned(),
+            )));
+        }
+    }
+    ms
 }

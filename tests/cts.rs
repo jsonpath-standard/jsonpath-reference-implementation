@@ -24,6 +24,8 @@ mod tests {
         selector: String,
         document: serde_yaml::Value, // JSON deserialised as YAML
         result: serde_yaml::Value,   // JSON deserialised as YAML
+        #[serde(default)]
+        focus: bool, // if true, run only tests with focus set to true
     }
 
     #[test]
@@ -32,8 +34,13 @@ mod tests {
 
         let suite: TestSuite = serde_yaml::from_str(&y).expect("failed to deserialize cts.yaml");
 
+        let focussed = (&suite.tests).iter().find(|t| t.focus).is_some();
+
         let mut errors: Vec<String> = Vec::new();
         for t in suite.tests {
+            if focussed && !t.focus {
+                continue;
+            }
             let result = panic::catch_unwind(|| {
                 if VERBOSE {
                     println!(
@@ -77,7 +84,10 @@ mod tests {
                 errors.push(format!("{:?}", err));
             }
         }
-        assert!(errors.is_empty())
+        assert!(errors.is_empty());
+        if focussed {
+            assert!(false, "testcase(s) still focussed")
+        }
     }
 
     fn equal(actual: &Vec<&serde_json::Value>, expected: Vec<serde_json::Value>) -> bool {
@@ -141,16 +151,14 @@ mod tests {
 
             serde_yaml::Value::Mapping(map) => {
                 let object_members = map.iter().map(|(k, v)| {
-                    println!(
-                        ">>>>>>>>> k={:?}, v={:?}, serde_json::to_string(k)={:?}",
-                        k,
-                        v,
-                        serde_json::to_string(k).expect("bananas")
-                    );
-                    (
-                        serde_json::to_string(k).expect("non-string mapping key"),
-                        as_json_value(v.clone()).expect("invalid map value"),
-                    )
+                    if let serde_yaml::Value::String(k_string) = k {
+                        (
+                            k_string.clone(), //serde_json::to_string(k).expect("non-string mapping key"),
+                            as_json_value(v.clone()).expect("invalid map value"),
+                        )
+                    } else {
+                        panic!("non-string mapping key")
+                    }
                 });
                 Ok(serde_json::Value::Object(object_members.collect()))
             }

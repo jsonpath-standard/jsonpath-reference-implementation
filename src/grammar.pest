@@ -5,7 +5,12 @@ rootSelector = { "$" }
 
 matcher = { dotChild }
 
-dotChild = _{ wildcardedDotChild }
+dotChild = _{ wildcardedDotChild | namedDotChild }
 wildcardedDotChild = { ".*" }
+namedDotChild = ${ "." ~ childName }
+childName = @{ char+ }
+char = {
+    !("\"" | "'" | "\\") ~ ANY
+}
 
 WHITESPACE = _{ " " }
