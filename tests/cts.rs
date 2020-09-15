@@ -22,8 +22,16 @@ mod tests {
     struct Testcase {
         name: String,
         selector: String,
-        document: serde_json::Value,
-        result: serde_json::Value,
+
+        #[serde(default)]
+        invalid_selector: bool,
+
+        #[serde(default)]
+        document: serde_json::Value, // omitted if invalid_selector = true
+
+        #[serde(default)]
+        result: serde_json::Value, // omitted if invalid_selector = true
+
         #[serde(default)]
         focus: bool, // if true, run only tests with focus set to true
     }
@@ -50,14 +58,16 @@ mod tests {
                     );
                 }
                 let path = jsonpath::parse(&t.selector);
-                assert!(
-                    path.is_ok(),
-                    "parsing {} failed: {}",
-                    t.selector,
-                    path.err().expect("should be an error")
-                );
 
-                if let Ok(p) = path {
+                if let Ok(ref p) = path {
+                    if t.invalid_selector {
+                        assert!(
+                            path.is_err(),
+                            "{}: parsing {} should have failed",
+                            t.name,
+                            t.selector
+                        );
+                    }
                     if let Ok(result) = p.find(&t.document) {
                         if !equal(&result, as_array(&t.result).expect("invalid result")) {
                             assert!(
@@ -70,6 +80,16 @@ mod tests {
                         }
                     } else {
                         assert!(false, "find failed") // should not happen
+                    }
+                } else {
+                    if !t.invalid_selector {
+                        assert!(
+                            path.is_ok(),
+                            "{}: parsing {} should have succeeded but failed: {}",
+                            t.name,
+                            t.selector,
+                            path.err().expect("should be an error")
+                        );
                     }
                 }
             });
