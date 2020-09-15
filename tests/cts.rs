@@ -22,17 +22,18 @@ mod tests {
     struct Testcase {
         name: String,
         selector: String,
-        document: serde_yaml::Value, // JSON deserialised as YAML
-        result: serde_yaml::Value,   // JSON deserialised as YAML
+        document: serde_json::Value,
+        result: serde_json::Value,
         #[serde(default)]
         focus: bool, // if true, run only tests with focus set to true
     }
 
     #[test]
     fn compliance_test_suite() {
-        let y = fs::read_to_string("tests/cts.yaml").expect("failed to read cts.yaml");
+        let cts_json = fs::read_to_string("tests/cts.json").expect("failed to read cts.json");
 
-        let suite: TestSuite = serde_yaml::from_str(&y).expect("failed to deserialize cts.yaml");
+        let suite: TestSuite =
+            serde_json::from_str(&cts_json).expect("failed to deserialize cts.json");
 
         let focussed = (&suite.tests).iter().find(|t| t.focus).is_some();
 
@@ -44,11 +45,8 @@ mod tests {
             let result = panic::catch_unwind(|| {
                 if VERBOSE {
                     println!(
-                        "name = {}, selector = {}, document = {}, result = {}",
-                        t.name,
-                        t.selector,
-                        as_json(&t.document).expect("invalid document"),
-                        as_json(&t.result).expect("invalid result")
+                        "name = {}, selector = {}, document = {:?}, result = {:?}",
+                        t.name, t.selector, t.document, t.result
                     );
                 }
                 let path = jsonpath::parse(&t.selector);
@@ -60,18 +58,13 @@ mod tests {
                 );
 
                 if let Ok(p) = path {
-                    if let Ok(result) =
-                        p.find(&as_json_value(t.document).expect("invalid document"))
-                    {
-                        if !equal(
-                            &result,
-                            as_json_value_array(&t.result).expect("invalid result"),
-                        ) {
+                    if let Ok(result) = p.find(&t.document) {
+                        if !equal(&result, as_array(&t.result).expect("invalid result")) {
                             assert!(
                                 false,
                                 "incorrect result for {}, expected: {:?}, got: {:?}",
                                 t.name,
-                                as_json_value_array(&t.result).unwrap(),
+                                as_array(&t.result).unwrap(),
                                 result
                             )
                         }
@@ -100,91 +93,13 @@ mod tests {
         }
     }
 
-    fn as_json(v: &serde_yaml::Value) -> Result<String, String> {
+    fn as_array(v: &serde_json::Value) -> Result<Vec<serde_json::Value>, String> {
         match v {
-            serde_yaml::Value::Null => Ok("null".to_string()),
-
-            serde_yaml::Value::Bool(b) => Ok(b.to_string()),
-
-            serde_yaml::Value::Number(num) => Ok(num.to_string()),
-
-            serde_yaml::Value::String(s) => Ok(json::stringify(s.to_string())),
-
-            serde_yaml::Value::Sequence(seq) => {
-                let array_elements = seq
-                    .into_iter()
-                    .map(|v| as_json(v).expect("invalid sequence element"));
-                Ok(format!("[{}]", itertools::join(array_elements, ",")))
-            }
-
-            serde_yaml::Value::Mapping(map) => {
-                let object_members = map.iter().map(|(k, v)| {
-                    format!(
-                        "{}:{}",
-                        as_json(k).expect("invalid object key"),
-                        as_json(v).expect("invalid object value")
-                    )
-                });
-                Ok(format!("{{{}}}", itertools::join(object_members, ",")))
-            }
-        }
-    }
-
-    fn as_json_value(v: serde_yaml::Value) -> Result<serde_json::Value, String> {
-        match v {
-            serde_yaml::Value::Null => Ok(serde_json::Value::Null),
-
-            serde_yaml::Value::Bool(b) => Ok(serde_json::Value::Bool(b)),
-
-            serde_yaml::Value::Number(num) => {
-                Ok(serde_json::Value::Number(yaml_number_as_json(num.clone())))
-            }
-
-            serde_yaml::Value::String(s) => Ok(serde_json::Value::String(s.clone())),
-
-            serde_yaml::Value::Sequence(seq) => {
-                let array_elements = seq
-                    .into_iter()
-                    .map(|v| as_json_value(v).expect("invalid sequence element"));
-                Ok(serde_json::Value::Array(array_elements.collect()))
-            }
-
-            serde_yaml::Value::Mapping(map) => {
-                let object_members = map.iter().map(|(k, v)| {
-                    if let serde_yaml::Value::String(k_string) = k {
-                        (
-                            k_string.clone(), //serde_json::to_string(k).expect("non-string mapping key"),
-                            as_json_value(v.clone()).expect("invalid map value"),
-                        )
-                    } else {
-                        panic!("non-string mapping key")
-                    }
-                });
-                Ok(serde_json::Value::Object(object_members.collect()))
-            }
-        }
-    }
-
-    fn as_json_value_array(v: &serde_yaml::Value) -> Result<Vec<serde_json::Value>, String> {
-        match v {
-            serde_yaml::Value::Sequence(seq) => {
-                let array_elements = seq
-                    .into_iter()
-                    .map(|v| as_json_value(v.clone()).expect("invalid sequence element"));
+            serde_json::Value::Array(seq) => {
+                let array_elements = seq.into_iter().map(|v| v.clone());
                 Ok(array_elements.collect())
             }
             _ => Err("not a sequence".to_string()),
-        }
-    }
-
-    fn yaml_number_as_json(n: serde_yaml::Number) -> serde_json::Number {
-        if n.is_i64() {
-            serde_json::Number::from(n.as_i64().expect("invalid i64 in YAML"))
-        } else if n.is_u64() {
-            serde_json::Number::from(n.as_u64().expect("invalid u64 in YAML"))
-        } else {
-            serde_json::Number::from_f64(n.as_f64().expect("invalid f64 in YAML"))
-                .expect("invalid f64 for JSON")
         }
     }
 }

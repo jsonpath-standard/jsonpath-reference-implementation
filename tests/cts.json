@@ -1,0 +1,38 @@
+{ "tests": [
+  {
+    "name": "root",
+    "selector": "$",
+    "document": ["first", "second"],
+    "result": [["first", "second"]]
+  }, {
+    "name": "dot child",
+    "selector": "$.a",
+    "document": {"a" : "A", "b" : "B"},
+    "result": ["A"]
+  }, {
+    "name": "dot child absent",
+    "selector": "$.c",
+    "document": {"a" : "A", "b" : "B"},
+    "result": []
+  }, {
+    "name": "dot child of array",
+    "selector": "$.a",
+    "document": ["first", "second"],
+    "result": []
+  }, {
+    "name": "wildcarded child",
+    "selector": "$.*",
+    "document": {"a" : "A", "b" : "B"},
+    "result": ["A", "B"]
+  }, {
+    "name": "wildcarded child of array",
+    "selector": "$.*",
+    "document": ["first", "second"],
+    "result": []
+  }, {
+    "name": "wildcarded child dot child",
+    "selector": "$.*.a",
+    "document": {"x": {"a" : "Ax", "b" : "Bx"}, "y": {"a" : "Ay", "b" : "By"}},
+    "result": ["Ax", "Ay"]
+  }
+]}
