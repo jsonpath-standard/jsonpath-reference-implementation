@@ -1,5 +1,5 @@
 [package]
-name = "jsonpath_ri"
+name = "jsonpath_reference_implementation"
 version = "0.0.1"
 authors = ["Glyn Normington <glyn.normington@gmail.com>"]
 edition = "2018"
