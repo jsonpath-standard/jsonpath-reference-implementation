@@ -10,6 +10,15 @@
     "document": {"a" : "A", "b" : "B"},
     "result": ["A"]
   }, {
+    "name": "dot child, ☺ name",
+    "selector": "$.☺",
+    "document": {"☺" : "A", "b" : "B"},
+    "result": ["A"]
+  }, {
+    "name": "dot child, invalid character",
+    "selector": "$.&",
+    "invalid_selector": true
+    }, {
     "name": "dot child absent",
     "selector": "$.c",
     "document": {"a" : "A", "b" : "B"},
