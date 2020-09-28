@@ -22,11 +22,13 @@ pub fn parse<'a>(selector: &'a str) -> Result<Box<dyn path::Path + 'a>, String> 
     for r in selector_rule.into_inner() {
         match r.as_rule() {
             Rule::rootSelector => ms.push(Box::new(matchers::RootSelector {})),
+
             Rule::matcher => {
                 for m in parse_matcher(r) {
                     ms.push(m)
                 }
             }
+
             _ => println!("r={:?}", r),
         }
     }
@@ -39,11 +41,19 @@ fn parse_matcher(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn match
     for r in matcher_rule.into_inner() {
         match r.as_rule() {
             Rule::wildcardedDotChild => ms.push(Box::new(matchers::WildcardedChild {})),
+
             Rule::namedDotChild => {
                 for m in parse_dot_child_matcher(r) {
                     ms.push(m)
                 }
             }
+
+            Rule::union => {
+                for m in parse_union(r) {
+                    ms.push(m)
+                }
+            }
+
             _ => (),
         }
     }
@@ -56,10 +66,74 @@ fn parse_dot_child_matcher(
     let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
     for r in matcher_rule.into_inner() {
         if let Rule::childName = r.as_rule() {
-            ms.push(Box::new(matchers::new_dot_child_matcher(
-                r.as_str().to_owned(),
-            )));
+            ms.push(Box::new(matchers::new_child_matcher(r.as_str().to_owned())));
         }
     }
     ms
+}
+
+fn parse_union(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
+    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
+    for r in matcher_rule.into_inner() {
+        if let Rule::unionChild = r.as_rule() {
+            for m in parse_union_child(r) {
+                ms.push(m)
+            }
+        }
+    }
+    vec![Box::new(matchers::new_union(ms))]
+}
+
+fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
+    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
+    for r in matcher_rule.into_inner() {
+        match r.as_rule() {
+            Rule::doubleInner => {
+                ms.push(Box::new(matchers::new_child_matcher(unescape(r.as_str()))));
+            }
+
+            Rule::singleInner => {
+                ms.push(Box::new(matchers::new_child_matcher(unescape(r.as_str()))));
+            }
+
+            _ => (),
+        }
+    }
+    ms
+}
+
+const ESCAPED: &str = "\"'\\/bfnrt";
+const UNESCAPED: &str = "\"'\\/\u{0008}\u{000C}\u{000A}\u{000D}\u{0009}";
+
+fn unescape(contents: &str) -> String {
+    let mut output = String::new();
+    let xs: Vec<char> = contents.chars().collect();
+    let mut i = 0;
+    while i < xs.len() {
+        if xs[i] == '\\' {
+            i += 1;
+            if xs[i] == 'u' {
+                i += 1;
+
+                // convert xs[i..i+4] to Unicode character and add it to the output
+                let x = xs[i..i + 4].iter().collect::<String>();
+                let n = u32::from_str_radix(&x, 16);
+                let u = std::char::from_u32(n.unwrap());
+                output.push(u.unwrap());
+
+                i += 4;
+            } else {
+                for (j, c) in ESCAPED.chars().enumerate() {
+                    if xs[i] == c {
+                        output.push(UNESCAPED.chars().nth(j).unwrap())
+                    }
+                }
+                i += 1;
+            }
+        } else {
+            output.push(xs[i]);
+            i += 1;
+        }
+    }
+    output
 }

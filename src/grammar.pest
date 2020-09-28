@@ -3,14 +3,35 @@ selector = _{ SOI ~ jsonPath ~ EOI }
 jsonPath = ${ rootSelector ~ matcher* }
 rootSelector = { "$" }
 
-matcher = { dotChild }
+matcher = { dotChild | union }
 
 dotChild = _{ wildcardedDotChild | namedDotChild }
 wildcardedDotChild = { ".*" }
 namedDotChild = ${ "." ~ childName }
 childName = @{ char+ }
 char = {
-    !("\"" | "'" | "\\") ~ ANY
+    !("\"" | "'" | "\\") ~ ANY // char is still TBD in the draft
+}
+
+union =  { "[" ~ unionElement ~ ("," ~ unionElement)* ~ "]" }
+unionElement = _{ unionChild }
+unionChild = { doubleQuotedString | singleQuotedString }
+
+doubleQuotedString = _{ "\"" ~ doubleInner ~ "\"" }
+doubleInner = @{ doubleChar* }
+doubleChar = {
+    !("\"" | "\\" | '\u{00}'..'\u{1F}') ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ upperHexDigit{4})
+}
+upperHexDigit = _{ ASCII_DIGIT | "A" | "B" | "C" | "D" | "E" | "F" }
+
+singleQuotedString = _{ "'" ~ singleInner ~ "'" }
+singleInner = @{ singleChar* }
+singleChar = {
+    !("'" | "\\" | '\u{00}'..'\u{1F}') ~ ANY
+    | "\\" ~ ("'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ upperHexDigit{4})
 }
 
 WHITESPACE = _{ " " }

@@ -33,15 +33,15 @@ impl Matcher for WildcardedChild {
     }
 }
 
-pub struct DotChild {
+pub struct Child {
     name: String,
 }
 
-pub fn new_dot_child_matcher(name: String) -> DotChild {
-    DotChild { name }
+pub fn new_child_matcher(name: String) -> Child {
+    Child { name }
 }
 
-impl Matcher for DotChild {
+impl Matcher for Child {
     fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
         if node.is_object() {
             let mapping = node.as_object().unwrap();
@@ -53,5 +53,27 @@ impl Matcher for DotChild {
         } else {
             Box::new(iter::empty())
         }
+    }
+}
+
+pub struct Union {
+    elements: Vec<Box<dyn Matcher>>,
+}
+
+pub fn new_union(elements: Vec<Box<dyn Matcher>>) -> Union {
+    Union { elements }
+}
+
+impl Matcher for Union {
+    fn select<'a, 'b>(&'a self, node: &'b Value) -> Box<dyn Iterator<Item = &'b Value> + 'b> {
+        // union of matches of the matchers in the union
+        let mut u = vec![];
+        for m in &self.elements {
+            let m_selection = m.select(node);
+            for s in m_selection {
+                u.push(s);
+            }
+        }
+        Box::new(u.into_iter())
     }
 }
