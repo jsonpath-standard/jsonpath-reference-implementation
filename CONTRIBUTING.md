@@ -23,6 +23,10 @@ git commit -a
 git push origin my-new-feature
 ```
 
+See the [Developer Guide](./DEVELOPING.md) for how to set up a development environment and run the tests.
+If you want to make a small change, e.g. to fix a typo, you don't have to set up a development environment
+as the tests will run automatically against any pull request. 
+
 ### Staying In Sync With Upstream
 
 When your branch gets out of sync with the jsonpath-standard/jsonpath-reference-implementation/main branch, use the following to update:

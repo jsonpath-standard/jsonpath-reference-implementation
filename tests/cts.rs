@@ -11,8 +11,6 @@ mod tests {
     use std::fs;
     use std::panic;
 
-    const VERBOSE: bool = false;
-
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct TestSuite {
         tests: Vec<Testcase>,
@@ -51,9 +49,14 @@ mod tests {
                 continue;
             }
             let result = panic::catch_unwind(|| {
-                if VERBOSE {
+                if t.invalid_selector {
                     println!(
-                        "name = {}, selector = {}, document = {:?}, result = {:?}",
+                        "testcase name = `{}`, selector = `{}`, expected invalid selector.",
+                        t.name, t.selector
+                    );
+                } else {
+                    println!(
+                        "testcase name = `{}`, selector = `{}`, document:\n{:#}\nexpected result = `{}`.",
                         t.name, t.selector, t.document, t.result
                     );
                 }
