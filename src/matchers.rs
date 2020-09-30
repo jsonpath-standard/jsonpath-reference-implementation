@@ -10,13 +10,13 @@ use std::iter;
 // Matcher maps a node to a list of nodes. If the input node is not matched by the matcher or
 // the matcher does not select any subnodes of the input node, then the result is empty.
 pub trait Matcher {
-    fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a>;
+    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a>;
 }
 
 pub struct RootSelector {}
 
 impl Matcher for RootSelector {
-    fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
         Box::new(iter::once(node))
     }
 }
@@ -42,7 +42,7 @@ pub fn new_child_matcher(name: String) -> Child {
 }
 
 impl Matcher for Child {
-    fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
         if node.is_object() {
             let mapping = node.as_object().unwrap();
             if mapping.contains_key(&self.name) {
@@ -65,15 +65,7 @@ pub fn new_union(elements: Vec<Box<dyn Matcher>>) -> Union {
 }
 
 impl Matcher for Union {
-    fn select<'a, 'b>(&'a self, node: &'b Value) -> Box<dyn Iterator<Item = &'b Value> + 'b> {
-        // union of matches of the matchers in the union
-        let mut u = vec![];
-        for m in &self.elements {
-            let m_selection = m.select(node);
-            for s in m_selection {
-                u.push(s);
-            }
-        }
-        Box::new(u.into_iter())
+    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+        Box::new(self.elements.iter().flat_map(move |it| it.select(node)))
     }
 }
