@@ -12,7 +12,7 @@ pub enum FindError {
 }
 
 pub trait Path {
-    fn find<'a>(&self, document: &'a Value) -> Result<Vec<&'a Value>, FindError>;
+    fn find<'a>(&'a self, document: &'a Value) -> Result<Vec<&'a Value>, FindError>;
 }
 
 struct SelectorPath {
@@ -24,7 +24,7 @@ pub fn new<'a>(matchers: Vec<Box<dyn matchers::Matcher>>) -> impl Path + 'a {
 }
 
 impl Path for SelectorPath {
-    fn find<'a>(&self, document: &'a Value) -> Result<Vec<&'a Value>, FindError> {
+    fn find<'a>(&'a self, document: &'a Value) -> Result<Vec<&'a Value>, FindError> {
         // pass nodes, starting with document alone, through each matcher in turn
         Ok((&self.matchers)
             .iter()
