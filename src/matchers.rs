@@ -25,8 +25,8 @@ pub struct WildcardedChild {}
 
 impl Matcher for WildcardedChild {
     fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
-        if node.is_object() {
-            Box::new(node.as_object().unwrap().into_iter().map(|(_k, v)| v))
+        if let Some(m) = node.as_object() {
+            Box::new(m.values())
         } else {
             Box::new(iter::empty())
         }
@@ -43,16 +43,7 @@ pub fn new_child_matcher(name: String) -> Child {
 
 impl Matcher for Child {
     fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
-        if node.is_object() {
-            let mapping = node.as_object().unwrap();
-            if mapping.contains_key(&self.name) {
-                Box::new(iter::once(&mapping[&self.name]))
-            } else {
-                Box::new(iter::empty())
-            }
-        } else {
-            Box::new(iter::empty())
-        }
+        Box::new(node.get(&self.name).into_iter())
     }
 }
 
