@@ -7,16 +7,19 @@
 use serde_json::Value;
 use std::iter;
 
+/// An iterator over matcher selection results.
+type Iter<'a> = Box<dyn Iterator<Item = &'a Value> + 'a>;
+
 // Matcher maps a node to a list of nodes. If the input node is not matched by the matcher or
 // the matcher does not select any subnodes of the input node, then the result is empty.
 pub trait Matcher {
-    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a>;
+    fn select<'a>(&'a self, node: &'a Value) -> Iter<'a>;
 }
 
 pub struct RootSelector {}
 
 impl Matcher for RootSelector {
-    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+    fn select<'a>(&'a self, node: &'a Value) -> Iter<'a> {
         Box::new(iter::once(node))
     }
 }
@@ -24,7 +27,7 @@ impl Matcher for RootSelector {
 pub struct WildcardedChild {}
 
 impl Matcher for WildcardedChild {
-    fn select<'a>(&self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+    fn select<'a>(&self, node: &'a Value) -> Iter<'a> {
         if let Some(m) = node.as_object() {
             Box::new(m.values())
         } else {
@@ -44,7 +47,7 @@ impl Child {
 }
 
 impl Matcher for Child {
-    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+    fn select<'a>(&'a self, node: &'a Value) -> Iter<'a> {
         Box::new(node.get(&self.name).into_iter())
     }
 }
@@ -60,7 +63,7 @@ impl Union {
 }
 
 impl Matcher for Union {
-    fn select<'a>(&'a self, node: &'a Value) -> Box<dyn Iterator<Item = &'a Value> + 'a> {
+    fn select<'a>(&'a self, node: &'a Value) -> Iter<'a> {
         Box::new(self.elements.iter().flat_map(move |it| it.select(node)))
     }
 }
