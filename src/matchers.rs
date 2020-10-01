@@ -33,10 +33,10 @@ pub struct WildcardedChild {}
 
 impl Matcher for WildcardedChild {
     fn select<'a>(&self, node: &'a Value) -> Iter<'a> {
-        if let Some(m) = node.as_object() {
-            Box::new(m.values())
-        } else {
-            Box::new(iter::empty())
+        match node {
+            Value::Object(m) => Box::new(m.values()),
+            Value::Array(a) => Box::new(a.iter()),
+            _ => Box::new(iter::empty()),
         }
     }
 }
@@ -73,5 +73,27 @@ impl Union {
 impl Matcher for Union {
     fn select<'a>(&'a self, node: &'a Value) -> Iter<'a> {
         Box::new(self.elements.iter().flat_map(move |it| it.select(node)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::{json, Value};
+
+    #[test]
+    fn object_wildcard() {
+        let s = WildcardedChild {};
+        let j = json!({"a": 1, "b": 2});
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(format!("{:?}", r), "[Number(1), Number(2)]");
+    }
+
+    #[test]
+    fn array_wildcard() {
+        let s = WildcardedChild {};
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(format!("{:?}", r), "[Number(1), Number(2)]");
     }
 }
