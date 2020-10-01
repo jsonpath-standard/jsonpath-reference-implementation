@@ -37,8 +37,10 @@ pub struct Child {
     name: String,
 }
 
-pub fn new_child_matcher(name: String) -> Child {
-    Child { name }
+impl Child {
+    pub fn new(name: String) -> Self {
+        Child { name }
+    }
 }
 
 impl Matcher for Child {
@@ -51,8 +53,10 @@ pub struct Union {
     elements: Vec<Box<dyn Matcher>>,
 }
 
-pub fn new_union(elements: Vec<Box<dyn Matcher>>) -> Union {
-    Union { elements }
+impl Union {
+    pub fn new(elements: Vec<Box<dyn Matcher>>) -> Self {
+        Union { elements }
+    }
 }
 
 impl Matcher for Union {

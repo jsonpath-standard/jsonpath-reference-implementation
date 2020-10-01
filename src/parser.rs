@@ -66,7 +66,7 @@ fn parse_dot_child_matcher(
     let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
     for r in matcher_rule.into_inner() {
         if let Rule::childName = r.as_rule() {
-            ms.push(Box::new(matchers::new_child_matcher(r.as_str().to_owned())));
+            ms.push(Box::new(matchers::Child::new(r.as_str().to_owned())));
         }
     }
     ms
@@ -81,7 +81,7 @@ fn parse_union(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matcher
             }
         }
     }
-    vec![Box::new(matchers::new_union(ms))]
+    vec![Box::new(matchers::Union::new(ms))]
 }
 
 fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
@@ -89,11 +89,11 @@ fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn m
     for r in matcher_rule.into_inner() {
         match r.as_rule() {
             Rule::doubleInner => {
-                ms.push(Box::new(matchers::new_child_matcher(unescape(r.as_str()))));
+                ms.push(Box::new(matchers::Child::new(unescape(r.as_str()))));
             }
 
             Rule::singleInner => {
-                ms.push(Box::new(matchers::new_child_matcher(unescape(r.as_str()))));
+                ms.push(Box::new(matchers::Child::new(unescape(r.as_str()))));
             }
 
             _ => (),
