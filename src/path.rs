@@ -19,7 +19,7 @@ struct SelectorPath {
     matchers: Vec<Box<dyn matchers::Matcher>>,
 }
 
-pub fn new<'a>(matchers: Vec<Box<dyn matchers::Matcher>>) -> impl Path + 'a {
+pub fn new(matchers: Vec<Box<dyn matchers::Matcher>>) -> impl Path {
     SelectorPath { matchers }
 }
 

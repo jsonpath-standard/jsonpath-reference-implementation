@@ -23,7 +23,7 @@ pub trait Matcher {
 pub struct RootSelector {}
 
 impl Matcher for RootSelector {
-    fn select<'a>(&'a self, node: &'a Value) -> Iter<'a> {
+    fn select<'a>(&self, node: &'a Value) -> Iter<'a> {
         Box::new(iter::once(node))
     }
 }
@@ -53,7 +53,7 @@ impl Child {
 }
 
 impl Matcher for Child {
-    fn select<'a>(&'a self, node: &'a Value) -> Iter<'a> {
+    fn select<'a>(&self, node: &'a Value) -> Iter<'a> {
         Box::new(node.get(&self.name).into_iter())
     }
 }
