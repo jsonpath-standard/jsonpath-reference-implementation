@@ -37,7 +37,7 @@
     "name": "wildcarded child of array",
     "selector": "$.*",
     "document": ["first", "second"],
-    "result": []
+    "result": ["first", "second"]
   }, {
     "name": "wildcarded child dot child",
     "selector": "$.*.a",
