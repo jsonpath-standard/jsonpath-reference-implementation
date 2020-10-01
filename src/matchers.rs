@@ -10,12 +10,16 @@ use std::iter;
 /// An iterator over matcher selection results.
 type Iter<'a> = Box<dyn Iterator<Item = &'a Value> + 'a>;
 
-// Matcher maps a node to a list of nodes. If the input node is not matched by the matcher or
-// the matcher does not select any subnodes of the input node, then the result is empty.
+/// Matcher maps a node to a list of nodes. If the input node is not matched by the matcher or
+/// the matcher does not select any subnodes of the input node, then the result is empty.
 pub trait Matcher {
     fn select<'a>(&'a self, node: &'a Value) -> Iter<'a>;
 }
 
+/// Selects exactly one item, namely the node
+/// of the subtree the selector is applied to.
+///
+/// (which may or may be not the actual root of the document).
 pub struct RootSelector {}
 
 impl Matcher for RootSelector {
@@ -24,6 +28,7 @@ impl Matcher for RootSelector {
     }
 }
 
+/// Selects all children of a node.
 pub struct WildcardedChild {}
 
 impl Matcher for WildcardedChild {
@@ -36,6 +41,7 @@ impl Matcher for WildcardedChild {
     }
 }
 
+/// Selects a named child.
 pub struct Child {
     name: String,
 }
@@ -52,6 +58,8 @@ impl Matcher for Child {
     }
 }
 
+/// Applies a sequence of selectors on the same node and returns
+/// a concatenation of the results.
 pub struct Union {
     elements: Vec<Box<dyn Matcher>>,
 }
