@@ -461,5 +461,48 @@
     "name": "union child, single quotes, incomplete escape",
     "selector": "$['\\']",
     "invalid_selector": true
+  }, {
+    "name": "union array access",
+    "selector": "$[0]",
+    "document": ["first", "second"],
+    "result": ["first"]
+  }, {
+    "name": "union array access, 1",
+    "selector": "$[1]",
+    "document": ["first", "second"],
+    "result": ["second"]
+  }, {
+    "name": "union array access, out of bound",
+    "selector": "$[2]",
+    "document": ["first", "second"],
+    "result": []
+  }, {
+    "name": "union array access, negative",
+    "selector": "$[-1]",
+    "document": ["first", "second"],
+    "result": ["second"]
+  }, {
+    "name": "union array access, more negative",
+    "selector": "$[-2]",
+    "document": ["first", "second"],
+    "result": ["first"]
+  }, {
+    "name": "union array access, negative out of bound",
+    "selector": "$[-3]",
+    "document": ["first", "second"],
+    "result": []
+  }, {
+    "name": "union array access, on object",
+    "selector": "$[0]",
+    "document": {"foo": 1},
+    "result": []
+  }, {
+    "name": "union array access, leading 0",
+    "selector": "$[01]",
+    "invalid_selector": true
+  }, {
+    "name": "union array access, leading -0",
+    "selector": "$[-01]",
+    "invalid_selector": true
   }
 ]}

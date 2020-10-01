@@ -73,20 +73,15 @@ impl ArrayIndex {
 
 impl Matcher for ArrayIndex {
     fn select<'a>(&self, node: &'a Value) -> Iter<'a> {
-        let len = if let Value::Array(a) = node {
-            a.len()
-        } else {
-            0
-        };
         let idx = if self.index >= 0 {
             self.index as usize
         } else {
-            let abs = (-self.index) as usize;
-            if abs < len {
-                len - abs
+            let len = if let Value::Array(a) = node {
+                a.len() as i64
             } else {
-                return Box::new(iter::empty());
-            }
+                0
+            };
+            (len + self.index) as usize
         };
         Box::new(node.get(idx).into_iter())
     }
@@ -161,6 +156,14 @@ mod tests {
         let j = json!([1, 2]);
         let r: Vec<&Value> = s.select(&j).collect();
         assert_eq!(format!("{:?}", r), "[Number(2)]");
+    }
+
+    #[test]
+    fn array_index_negative_extreme() {
+        let s = ArrayIndex::new(-2);
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(format!("{:?}", r), "[Number(1)]");
     }
 
     #[test]

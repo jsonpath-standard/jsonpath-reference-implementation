@@ -75,10 +75,18 @@ fn parse_dot_child_matcher(
 fn parse_union(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
     let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
     for r in matcher_rule.into_inner() {
-        if let Rule::unionChild = r.as_rule() {
-            for m in parse_union_child(r) {
-                ms.push(m)
+        match r.as_rule() {
+            Rule::unionChild => {
+                for m in parse_union_child(r) {
+                    ms.push(m)
+                }
             }
+            Rule::unionArrayIndex => {
+                for m in parse_union_array_index(r) {
+                    ms.push(m)
+                }
+            }
+            _ => {}
         }
     }
     vec![Box::new(matchers::Union::new(ms))]
@@ -99,6 +107,15 @@ fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn m
             _ => (),
         }
     }
+    ms
+}
+
+fn parse_union_array_index(
+    matcher_rule: pest::iterators::Pair<Rule>,
+) -> Vec<Box<dyn matchers::Matcher>> {
+    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
+    let i = matcher_rule.as_str().parse().unwrap();
+    ms.push(Box::new(matchers::ArrayIndex::new(i)));
     ms
 }
 
