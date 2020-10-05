@@ -123,11 +123,15 @@ fn unescape(contents: &str) -> String {
 
                 i += 4;
             } else {
-                for (j, c) in ESCAPED.chars().enumerate() {
-                    if xs[i] == c {
-                        output.push(UNESCAPED.chars().nth(j).unwrap())
+                let u = ESCAPED.chars().zip(UNESCAPED.chars()).find_map(|(e, u)| {
+                    if xs[i] == e {
+                        Some(u)
+                    } else {
+                        None
                     }
-                }
+                });
+                output.push(u.unwrap());
+
                 i += 1;
             }
         } else {
