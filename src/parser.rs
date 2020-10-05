@@ -101,7 +101,7 @@ fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn m
             }
 
             Rule::singleInner => {
-                ms.push(Box::new(matchers::Child::new(unescape(r.as_str()))));
+                ms.push(Box::new(matchers::Child::new(unescape_single(r.as_str()))));
             }
 
             _ => (),
@@ -119,38 +119,55 @@ fn parse_union_array_index(
     ms
 }
 
-const ESCAPED: &str = "\"'\\/bfnrt";
-const UNESCAPED: &str = "\"'\\/\u{0008}\u{000C}\u{000A}\u{000D}\u{0009}";
-
 fn unescape(contents: &str) -> String {
+    let s = format!(r#""{}""#, contents);
+    serde_json::from_str(&s).unwrap()
+}
+
+fn unescape_single(contents: &str) -> String {
+    let d = to_double_quoted(contents);
+    unescape(&d)
+}
+
+// converts a single quoted string body into a string that can be unescaped
+// by a function that knows how to unescape double quoted string,
+// It works by unescaping single quotes and escaping double quotes while leaving
+// everything else untouched.
+fn to_double_quoted(contents: &str) -> String {
     let mut output = String::new();
-    let xs: Vec<char> = contents.chars().collect();
-    let mut i = 0;
-    while i < xs.len() {
-        if xs[i] == '\\' {
-            i += 1;
-            if xs[i] == 'u' {
-                i += 1;
-
-                // convert xs[i..i+4] to Unicode character and add it to the output
-                let x = xs[i..i + 4].iter().collect::<String>();
-                let n = u32::from_str_radix(&x, 16);
-                let u = std::char::from_u32(n.unwrap());
-                output.push(u.unwrap());
-
-                i += 4;
+    let mut escaping = false;
+    for ch in contents.chars() {
+        if !escaping {
+            if ch == '\\' {
+                escaping = true;
             } else {
-                for (j, c) in ESCAPED.chars().enumerate() {
-                    if xs[i] == c {
-                        output.push(UNESCAPED.chars().nth(j).unwrap())
-                    }
+                if ch == '"' {
+                    output.push('\\');
                 }
-                i += 1;
+                output.push(ch);
             }
         } else {
-            output.push(xs[i]);
-            i += 1;
+            escaping = false;
+            if ch != '\'' {
+                output.push('\\');
+            };
+            output.push(ch);
         }
     }
     output
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_to_double() {
+        assert_eq!(to_double_quoted(r#"ab"#), r#"ab"#);
+        assert_eq!(to_double_quoted(r#"a"b"#), r#"a\"b"#);
+        assert_eq!(to_double_quoted(r#"a\'b"#), r#"a'b"#);
+        assert_eq!(to_double_quoted(r#"a\nb"#), r#"a\nb"#);
+        assert_eq!(to_double_quoted(r#"a\bb"#), r#"a\bb"#);
+        assert_eq!(to_double_quoted(r#"a\\b"#), r#"a\\b"#);
+    }
 }
