@@ -12,3 +12,6 @@ pub mod jsonpath;
 mod matchers;
 mod parser;
 pub mod path;
+
+pub mod ast;
+pub mod parser_ast;

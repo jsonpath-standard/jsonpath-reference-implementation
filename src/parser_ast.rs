@@ -1,0 +1,131 @@
+/*
+ * Copyright 2020 VMware, Inc.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
+use crate::ast::*;
+use crate::pest::Parser;
+
+#[derive(Parser)]
+#[grammar = "grammar.pest"]
+struct PathParser;
+
+pub fn parse(selector: &str) -> Result<Path, String> {
+    let selector_rule = PathParser::parse(Rule::selector, selector)
+        .map_err(|e| format!("{}", e))?
+        .next()
+        .unwrap();
+
+    let mut res = Path::Root;
+    for r in selector_rule.into_inner() {
+        res = match r.as_rule() {
+            Rule::rootSelector => res, // TODO: fix grammar so that this is a silent rule since we don't need it
+            Rule::matcher => Path::Sel(Box::new(res), parse_selector(r)),
+            _ => panic!("invalid parse tree {:?}", r),
+        }
+    }
+    Ok(res)
+}
+
+fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Selector {
+    let r = matcher_rule.into_inner().next().unwrap();
+
+    match r.as_rule() {
+        Rule::wildcardedDotChild => Selector::DotWildcard,
+        Rule::namedDotChild => Selector::DotName(parse_child_name(r)),
+        Rule::union => Selector::Union(parse_union_indices(r)),
+        _ => panic!("invalid parse tree {:?}", r),
+    }
+}
+
+fn parse_child_name(matcher_rule: pest::iterators::Pair<Rule>) -> String {
+    let r = matcher_rule.into_inner().next().unwrap();
+    match r.as_rule() {
+        Rule::childName => r.as_str().to_owned(),
+        _ => panic!("invalid parse tree {:?}", r),
+    }
+}
+
+fn parse_union_indices(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Index> {
+    let mut res = Vec::new();
+
+    for r in matcher_rule.into_inner() {
+        match r.as_rule() {
+            Rule::unionChild => res.append(&mut parse_union_child(r)),
+            Rule::unionArrayIndex => res.push(parse_union_array_index(r)),
+            _ => panic!("invalid parse tree {:?}", r),
+        }
+    }
+    res
+}
+
+fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Index> {
+    let mut res = Vec::new();
+    for r in matcher_rule.into_inner() {
+        match r.as_rule() {
+            Rule::doubleInner => res.push(Index::Field(unescape(r.as_str()))),
+            Rule::singleInner => res.push(Index::Field(unescape_single(r.as_str()))),
+            _ => panic!("invalid parse tree {:?}", r),
+        }
+    }
+    res
+}
+
+fn parse_union_array_index(matcher_rule: pest::iterators::Pair<Rule>) -> Index {
+    let i = matcher_rule.as_str().parse().unwrap();
+    Index::Number(i)
+}
+
+fn unescape(contents: &str) -> String {
+    let s = format!(r#""{}""#, contents);
+    serde_json::from_str(&s).unwrap()
+}
+
+fn unescape_single(contents: &str) -> String {
+    let d = to_double_quoted(contents);
+    unescape(&d)
+}
+
+// converts a single quoted string body into a string that can be unescaped
+// by a function that knows how to unescape double quoted string,
+// It works by unescaping single quotes and escaping double quotes while leaving
+// everything else untouched.
+fn to_double_quoted(contents: &str) -> String {
+    let mut output = String::new();
+    let mut escaping = false;
+    for ch in contents.chars() {
+        if !escaping {
+            if ch == '\\' {
+                escaping = true;
+            } else {
+                if ch == '"' {
+                    output.push('\\');
+                }
+                output.push(ch);
+            }
+        } else {
+            escaping = false;
+            if ch != '\'' {
+                output.push('\\');
+            };
+            output.push(ch);
+        }
+    }
+    output
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_to_double() {
+        assert_eq!(to_double_quoted(r#"ab"#), r#"ab"#);
+        assert_eq!(to_double_quoted(r#"a"b"#), r#"a\"b"#);
+        assert_eq!(to_double_quoted(r#"a\'b"#), r#"a'b"#);
+        assert_eq!(to_double_quoted(r#"a\nb"#), r#"a\nb"#);
+        assert_eq!(to_double_quoted(r#"a\bb"#), r#"a\bb"#);
+        assert_eq!(to_double_quoted(r#"a\\b"#), r#"a\\b"#);
+    }
+}
