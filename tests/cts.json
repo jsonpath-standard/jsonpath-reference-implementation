@@ -456,6 +456,16 @@
     "document": {"☺" : "A"},
     "result": ["A"]
   }, {
+    "name": "union child, single quotes, surrogate pair 𝄞",
+    "selector": "$['\\uD834\\uDD1E']",
+    "document": {"𝄞" : "A"},
+    "result": ["A"]
+  }, {
+    "name": "union child, single quotes, surrogate pair 😀",
+    "selector": "$['\\uD83D\\uDE00']",
+    "document": {"😀" : "A"},
+    "result": ["A"]
+  }, {
     "name": "union child, single quotes, invalid escaped ☺",
     "selector": "$['\\u263a']",
     "invalid_selector": true
