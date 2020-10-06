@@ -12,7 +12,7 @@ use crate::pest::Parser;
 #[grammar = "grammar.pest"]
 struct PathParser;
 
-pub fn parse(selector: &str) -> Result<Box<dyn path::Path + '_>, String> {
+pub fn parse(selector: &str) -> Result<impl path::Path, String> {
     let selector_rule = PathParser::parse(Rule::selector, selector)
         .map_err(|e| format!("{}", e))?
         .next()
@@ -33,7 +33,7 @@ pub fn parse(selector: &str) -> Result<Box<dyn path::Path + '_>, String> {
         }
     }
 
-    Ok(Box::new(path::new(ms)))
+    Ok(path::new(ms))
 }
 
 fn parse_matcher(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {

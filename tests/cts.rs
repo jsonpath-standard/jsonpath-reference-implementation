@@ -6,7 +6,7 @@
 
 #[cfg(test)]
 mod tests {
-    use jsonpath_reference_implementation::jsonpath;
+    use jsonpath_reference_implementation::{jsonpath, path::Path as _};
     use serde::{Deserialize, Serialize};
     use std::fs;
     use std::panic;

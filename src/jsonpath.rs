@@ -18,6 +18,6 @@ impl std::fmt::Display for SyntaxError {
     }
 }
 
-pub fn parse(selector: &str) -> Result<Box<dyn Path + '_>, SyntaxError> {
+pub fn parse(selector: &str) -> Result<impl Path, SyntaxError> {
     parser::parse(selector).map_err(|m| SyntaxError { message: m })
 }
