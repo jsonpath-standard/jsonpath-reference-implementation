@@ -58,6 +58,35 @@ impl Matcher for Child {
     }
 }
 
+/// Selects an array item by index.
+///
+/// If the index is negative, it references element len-abs(index).
+pub struct ArrayIndex {
+    index: i64,
+}
+
+impl ArrayIndex {
+    pub fn new(index: i64) -> Self {
+        ArrayIndex { index }
+    }
+}
+
+impl Matcher for ArrayIndex {
+    fn select<'a>(&self, node: &'a Value) -> Iter<'a> {
+        let idx = if self.index >= 0 {
+            self.index as usize
+        } else {
+            let len = if let Value::Array(a) = node {
+                a.len() as i64
+            } else {
+                0
+            };
+            (len + self.index) as usize
+        };
+        Box::new(node.get(idx).into_iter())
+    }
+}
+
 /// Applies a sequence of selectors on the same node and returns
 /// a concatenation of the results.
 pub struct Union {
@@ -95,5 +124,53 @@ mod tests {
         let j = json!([1, 2]);
         let r: Vec<&Value> = s.select(&j).collect();
         assert_eq!(format!("{:?}", r), "[Number(1), Number(2)]");
+    }
+
+    #[test]
+    fn array_index() {
+        let s = ArrayIndex::new(1);
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(format!("{:?}", r), "[Number(2)]");
+    }
+
+    #[test]
+    fn array_index_zero() {
+        let s = ArrayIndex::new(0);
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(format!("{:?}", r), "[Number(1)]");
+    }
+
+    #[test]
+    fn array_index_oob() {
+        let s = ArrayIndex::new(4);
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(r.len(), 0);
+    }
+
+    #[test]
+    fn array_index_negative() {
+        let s = ArrayIndex::new(-1);
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(format!("{:?}", r), "[Number(2)]");
+    }
+
+    #[test]
+    fn array_index_negative_extreme() {
+        let s = ArrayIndex::new(-2);
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(format!("{:?}", r), "[Number(1)]");
+    }
+
+    #[test]
+    fn array_index_negative_oob() {
+        let s = ArrayIndex::new(-10);
+        let j = json!([1, 2]);
+        let r: Vec<&Value> = s.select(&j).collect();
+        assert_eq!(r.len(), 0);
     }
 }

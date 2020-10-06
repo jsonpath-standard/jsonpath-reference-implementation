@@ -18,8 +18,9 @@ char = {
 }
 
 union =  { "[" ~ unionElement ~ ("," ~ unionElement)* ~ "]" }
-unionElement = _{ unionChild }
+unionElement = _{ unionChild | unionArrayIndex } // TODO: add unionArraySlice
 unionChild = { doubleQuotedString | singleQuotedString }
+unionArrayIndex = { "-" ? ~ ( "0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT* ) }
 
 doubleQuotedString = _{ "\"" ~ doubleInner ~ "\"" }
 doubleInner = @{ doubleChar* }
