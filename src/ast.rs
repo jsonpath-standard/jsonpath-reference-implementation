@@ -11,11 +11,11 @@ use serde_json::Value;
 /// For example, the JSONPath `$.foo.bar` yields this AST:
 ///
 /// ```text
-///               *
+///               ^
 ///              / \
-///             *   \___ DotName("bar")
+///             ^   \___ DotName("bar")
 ///            / \
-///           *   \___ DotName("foo")
+///           ^   \___ DotName("foo")
 ///          /
 /// Root ___/
 /// ```
@@ -23,13 +23,13 @@ use serde_json::Value;
 /// A more complicated example: `$.foo[1,2]["bar"]`:
 ///
 /// ```text
-///                  *
+///                  ^
 ///                 / \
-///                *   \___ Union
+///                ^   \___ Union
 ///               / \            \
-///              *   \___ Union   \
+///              ^   \___ Union   \
 ///             /            \     [Field("bar")]
-///            *              \
+///            ^              \
 ///           / \              [Number(1), Number(2)]
 ///          /   \
 /// Root ___/     \___ DotName("foo")
