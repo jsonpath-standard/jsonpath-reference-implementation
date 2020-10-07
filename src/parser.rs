@@ -14,18 +14,15 @@ struct PathParser;
 pub fn parse(selector: &str) -> Result<Path, String> {
     let selector_rule = PathParser::parse(Rule::selector, selector)
         .map_err(|e| format!("{}", e))?
-        .next()
+        .nth(1)
         .unwrap();
 
-    let mut res = Path::Root;
-    for r in selector_rule.into_inner() {
-        res = match r.as_rule() {
-            Rule::rootSelector => res, // TODO: fix grammar so that this is a silent rule since we don't need it
-            Rule::matcher => Path::Sel(Box::new(res), parse_selector(r)),
+    Ok(selector_rule
+        .into_inner()
+        .fold(Path::Root, |prev, r| match r.as_rule() {
+            Rule::matcher => Path::Sel(Box::new(prev), parse_selector(r)),
             _ => panic!("invalid parse tree {:?}", r),
-        }
-    }
-    Ok(res)
+        }))
 }
 
 fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Selector {
@@ -41,6 +38,7 @@ fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Selector {
 
 fn parse_child_name(matcher_rule: pest::iterators::Pair<Rule>) -> String {
     let r = matcher_rule.into_inner().next().unwrap();
+
     match r.as_rule() {
         Rule::childName => r.as_str().to_owned(),
         _ => panic!("invalid parse tree {:?}", r),
@@ -61,15 +59,13 @@ fn parse_union_indices(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Index> 
 }
 
 fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Index> {
-    let mut res = Vec::new();
-    for r in matcher_rule.into_inner() {
+    matcher_rule.into_inner().map(|r|
         match r.as_rule() {
-            Rule::doubleInner => res.push(Index::Field(unescape(r.as_str()))),
-            Rule::singleInner => res.push(Index::Field(unescape_single(r.as_str()))),
+            Rule::doubleInner => Index::Field(unescape(r.as_str())),
+            Rule::singleInner => Index::Field(unescape_single(r.as_str())),
             _ => panic!("invalid parse tree {:?}", r),
         }
-    }
-    res
+    ).collect()
 }
 
 fn parse_union_array_index(matcher_rule: pest::iterators::Pair<Rule>) -> Index {
