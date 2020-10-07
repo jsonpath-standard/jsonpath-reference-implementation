@@ -8,10 +8,6 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-pub mod jsonpath;
-mod matchers;
-mod parser;
-pub mod path;
-
 pub mod ast;
-pub mod parser_ast;
+pub mod jsonpath;
+mod parser;

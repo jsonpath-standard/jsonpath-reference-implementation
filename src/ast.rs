@@ -104,15 +104,12 @@ fn abs_index(index: i64, node: &Value) -> usize {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::parser_ast::parse;
+    use crate::parser::parse;
     use serde_json::json;
 
     #[test]
     fn demo() {
-        let a1 = Path::Sel(
-            Box::new(Path::Root),
-            Selector::DotName("foo".to_owned()),
-        );
+        let a1 = Path::Sel(Box::new(Path::Root), Selector::DotName("foo".to_owned()));
         let a2 = Path::Sel(Box::new(a1), Selector::DotName("bar".to_owned()));
         let a3 = Path::Sel(
             Box::new(a2),
