@@ -11,30 +11,30 @@ use serde_json::Value;
 /// For example, the JSONPath `$.foo.bar` yields this AST:
 ///
 /// ```text
-///               ^
-///              / \
-///             ^   \___ DotName("bar")
-///            / \
-///           ^   \___ DotName("foo")
-///          /
-/// Root ___/
+///              ^
+///             / \
+///            ^   \___ DotName("bar")
+///           / \
+/// Root ___ /   \___ DotName("foo")
 /// ```
 ///
 /// A more complicated example: `$.foo[1,2]["bar"]`:
 ///
 /// ```text
-///                  ^
-///                 / \
-///                ^   \___ Union
-///               / \            \
-///              ^   \___ Union   \
-///             /            \     [Field("bar")]
-///            ^              \
-///           / \              [Number(1), Number(2)]
-///          /   \
-/// Root ___/     \___ DotName("foo")
+///                 ^
+///                / \
+///               ^   \___ Union
+///              / \            \
+///             /   \___ Union   \___ [Field("bar")]
+///            /              \
+///           ^                \___ [Number(1), Number(2)]
+///          / \
+/// Root ___/   \___ DotName("foo")
 /// ```
 ///
+/// Selectors are left associative, thus `$.foo[1,2]["bar"]` behaves
+/// like (pseudocode) `(($.foo)[1,2])["bar"]`; thus the root of the resulting
+/// tree is actually the right-most selector (the last one to be applied).
 #[derive(Debug)]
 pub enum Path {
     Root,
