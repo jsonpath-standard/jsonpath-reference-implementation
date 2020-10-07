@@ -59,13 +59,14 @@ fn parse_union_indices(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Index> 
 }
 
 fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Index> {
-    matcher_rule.into_inner().map(|r|
-        match r.as_rule() {
+    matcher_rule
+        .into_inner()
+        .map(|r| match r.as_rule() {
             Rule::doubleInner => Index::Field(unescape(r.as_str())),
             Rule::singleInner => Index::Field(unescape_single(r.as_str())),
             _ => panic!("invalid parse tree {:?}", r),
-        }
-    ).collect()
+        })
+        .collect()
 }
 
 fn parse_union_array_index(matcher_rule: pest::iterators::Pair<Rule>) -> Index {
