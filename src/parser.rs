@@ -73,9 +73,9 @@ fn parse_union_array_index(matcher_rule: pest::iterators::Pair<Rule>) -> UnionEl
 }
 
 fn parse_union_array_slice(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement {
-    let mut start: Option<i64> = None;
-    let mut end: Option<i64> = None;
-    let mut step: Option<i64> = None;
+    let mut start: Option<isize> = None;
+    let mut end: Option<isize> = None;
+    let mut step: Option<isize> = None;
     for r in matcher_rule.into_inner() {
         match r.as_rule() {
             Rule::sliceStart => {

@@ -65,9 +65,9 @@ pub enum UnionElement {
 
 #[derive(Debug)]
 pub struct Slice {
-    pub start: Option<i64>, // FIXME: usize?
-    pub end: Option<i64>,   // FIXME: usize?
-    pub step: Option<i64>,  // FIXME: usize?
+    pub start: Option<isize>,
+    pub end: Option<isize>,
+    pub step: Option<isize>,
 }
 
 type Iter<'a> = Box<dyn Iterator<Item = &'a Value> + 'a>;
@@ -103,17 +103,17 @@ impl UnionElement {
                 if let Value::Array(arr) = v {
                     let step = slice.step.unwrap_or(1);
 
-                    let len = arr.len() as i64;
+                    let len = arr.len();
 
                     let start = slice
                         .start
-                        .map(|s| if s < 0 { s + len } else { s })
-                        .unwrap_or(if step > 0 { 0 } else { len - 1 });
+                        .map(|s| if s < 0 { s + (len as isize) } else { s })
+                        .unwrap_or(if step > 0 { 0 } else { (len as isize) - 1 });
 
                     let end = slice
                         .end
-                        .map(|e| if e < 0 { e + len } else { e })
-                        .unwrap_or(if step > 0 { len } else { -1 });
+                        .map(|e| if e < 0 { e + (len as isize) } else { e })
+                        .unwrap_or(if step > 0 { len as isize } else { -1 });
 
                     Box::new(array_slice(arr, start, end, step, len))
                 } else {
@@ -125,24 +125,32 @@ impl UnionElement {
     }
 }
 
-fn array_slice(arr: &[Value], start: i64, end: i64, step: i64, len: i64) -> Iter<'_> {
+fn array_slice(arr: &[Value], start: isize, end: isize, step: isize, len: usize) -> Iter<'_> {
     let mut sl = vec![];
     match step.cmp(&0) {
         Ordering::Greater => {
-            let st = if start < 0 { 0 } else { start }; // avoid CPU attack
-            let e = if end > len { len } else { end }; // avoid CPU attack
-            for i in (st..e).step_by(step as usize) {
-                if 0 <= i && i < len {
-                    sl.push(&arr[i as usize]);
+            let strt = if start < 0 { 0 } else { start as usize }; // avoid CPU attack
+            let e = if end > (len as isize) {
+                len
+            } else {
+                end as usize
+            }; // avoid CPU attack
+            for i in (strt..e).step_by(step as usize) {
+                if i < len {
+                    sl.push(&arr[i]);
                 }
             }
         }
 
         Ordering::Less => {
-            let strt = if start > len { len } else { start }; // avoid CPU attack
+            let strt = if start > (len as isize) {
+                len as isize
+            } else {
+                start
+            }; // avoid CPU attack
             let e = if end < -1 { -1 } else { end }; // avoid CPU attack
             for i in (-strt..-e).step_by(-step as usize) {
-                if 0 <= -i && -i < len {
+                if 0 <= -i && -i < (len as isize) {
                     sl.push(&arr[-i as usize]);
                 }
             }
