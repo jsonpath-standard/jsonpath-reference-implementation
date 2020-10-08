@@ -115,7 +115,7 @@ impl UnionElement {
                         .map(|e| if e < 0 { e + (len as isize) } else { e })
                         .unwrap_or(if step > 0 { len as isize } else { -1 });
 
-                    Box::new(array_slice(arr, start, end, step, len))
+                    Box::new(array_slice(arr, start, end, step))
                 } else {
                     Box::new(iter::empty())
                 }
@@ -125,7 +125,8 @@ impl UnionElement {
     }
 }
 
-fn array_slice(arr: &[Value], start: isize, end: isize, step: isize, len: usize) -> Iter<'_> {
+fn array_slice(arr: &[Value], start: isize, end: isize, step: isize) -> Iter<'_> {
+    let len = arr.len();
     let mut sl = vec![];
     match step.cmp(&0) {
         Ordering::Greater => {
