@@ -1,6 +1,6 @@
-selector = _{ SOI ~ rootSelector ~ jsonPath ~ EOI }
+selector = _{ SOI ~ rootSelector ~ matchers ~ EOI }
 
-jsonPath = ${ matcher* }
+matchers = ${ matcher* }
 rootSelector = { "$" }
 
 matcher = { dotChild | union }
