@@ -50,6 +50,7 @@ fn parse_union_indices(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<UnionEl
         .into_inner()
         .map(|r| match r.as_rule() {
             Rule::unionChild => parse_union_child(r),
+            Rule::unionArraySlice => parse_union_array_slice(r),
             Rule::unionArrayIndex => parse_union_array_index(r),
             _ => panic!("invalid parse tree {:?}", r),
         })
@@ -69,6 +70,31 @@ fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement 
 fn parse_union_array_index(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement {
     let i = matcher_rule.as_str().parse().unwrap();
     UnionElement::Index(i)
+}
+
+fn parse_union_array_slice(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement {
+    let mut start: Option<i64> = None;
+    let mut end: Option<i64> = None;
+    let mut step: Option<i64> = None;
+    for r in matcher_rule.into_inner() {
+        match r.as_rule() {
+            Rule::sliceStart => {
+                start = Some(r.as_str().parse().unwrap());
+            }
+
+            Rule::sliceEnd => {
+                end = Some(r.as_str().parse().unwrap());
+            }
+
+            Rule::sliceStep => {
+                step = Some(r.as_str().parse().unwrap());
+            }
+
+            _ => panic!("invalid parse tree {:?}", r),
+        }
+    }
+
+    UnionElement::Slice(Slice { start, end, step })
 }
 
 fn unescape(contents: &str) -> String {

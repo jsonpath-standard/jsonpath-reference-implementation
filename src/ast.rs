@@ -5,6 +5,8 @@
  */
 
 use serde_json::Value;
+use std::cmp::Ordering;
+use std::iter;
 
 /// A path is a tree of selector nodes.
 ///
@@ -57,7 +59,15 @@ pub enum Selector {
 #[derive(Debug)]
 pub enum UnionElement {
     Name(String),
+    Slice(Slice),
     Index(i64),
+}
+
+#[derive(Debug)]
+pub struct Slice {
+    pub start: Option<i64>, // FIXME: usize?
+    pub end: Option<i64>,   // FIXME: usize?
+    pub step: Option<i64>,  // FIXME: usize?
 }
 
 type Iter<'a> = Box<dyn Iterator<Item = &'a Value> + 'a>;
@@ -89,9 +99,58 @@ impl UnionElement {
     pub fn get<'a>(&self, v: &'a Value) -> Iter<'a> {
         match self {
             UnionElement::Name(name) => Box::new(v.get(name).into_iter()),
+            UnionElement::Slice(slice) => {
+                if let Value::Array(arr) = v {
+                    let step = slice.step.unwrap_or(1);
+
+                    let len = arr.len() as i64;
+
+                    let start = slice
+                        .start
+                        .map(|s| if s < 0 { s + len } else { s })
+                        .unwrap_or(if step > 0 { 0 } else { len - 1 });
+
+                    let end = slice
+                        .end
+                        .map(|e| if e < 0 { e + len } else { e })
+                        .unwrap_or(if step > 0 { len } else { -1 });
+
+                    Box::new(array_slice(arr, start, end, step, len))
+                } else {
+                    Box::new(iter::empty())
+                }
+            }
             UnionElement::Index(num) => Box::new(v.get(abs_index(*num, v)).into_iter()),
         }
     }
+}
+
+fn array_slice(arr: &[Value], start: i64, end: i64, step: i64, len: i64) -> Iter<'_> {
+    let mut sl = vec![];
+    match step.cmp(&0) {
+        Ordering::Greater => {
+            let st = if start < 0 { 0 } else { start }; // avoid CPU attack
+            let e = if end > len { len } else { end }; // avoid CPU attack
+            for i in (st..e).step_by(step as usize) {
+                if 0 <= i && i < len {
+                    sl.push(&arr[i as usize]);
+                }
+            }
+        }
+
+        Ordering::Less => {
+            let strt = if start > len { len } else { start }; // avoid CPU attack
+            let e = if end < -1 { -1 } else { end }; // avoid CPU attack
+            for i in (-strt..-e).step_by(-step as usize) {
+                if 0 <= -i && -i < len {
+                    sl.push(&arr[-i as usize]);
+                }
+            }
+        }
+
+        Ordering::Equal => (),
+    }
+    Box::new(sl.into_iter())
 }
 
 fn abs_index(index: i64, node: &Value) -> usize {

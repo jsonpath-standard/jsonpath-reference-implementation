@@ -47,8 +47,24 @@ test to `true`, for example:
 </pre>
 
 When one or more tests are focussed in this way, the test suite will fail with the message
-"testcase(s) still focussed" even if all the tests pass.
+"testcase(s) still focussed" if and only if all the focussed tests pass.
 This prevents pull requests being merged in which tests are accidentally left focussed.
+
+To skip one or more tests, edit [cts.json](tests/cts.json) and set the `skip` property of the relevant
+test to `true`, for example:
+<pre>
+  }, {
+    "name": "wildcarded child",
+    <b>"skip": true,</b>
+    "selector": "$.*",
+    "document": {"a" : "A", "b" : "B"},
+    "result": ["A", "B"]
+  }, {
+</pre>
+
+When one or more tests are skipped in this way, the test suite will fail with the message
+"testcase(s) still skipped" if and only if all the tests pass and none are focussed.
+This prevents pull requests being merged in which tests are accidentally left skipped.
 
 To see details of which tests run, use:
 ```

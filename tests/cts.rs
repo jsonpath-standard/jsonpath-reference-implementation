@@ -32,6 +32,9 @@ mod tests {
 
         #[serde(default)]
         focus: bool, // if true, run only tests with focus set to true
+
+        #[serde(default)]
+        skip: bool, // if true, do not run this test
     }
 
     #[test]
@@ -42,10 +45,11 @@ mod tests {
             serde_json::from_str(&cts_json).expect("failed to deserialize cts.json");
 
         let focussed = (&suite.tests).iter().find(|t| t.focus).is_some();
+        let skipped = (&suite.tests).iter().find(|t| t.skip).is_some();
 
         let mut errors: Vec<String> = Vec::new();
         for t in suite.tests {
-            if focussed && !t.focus {
+            if t.skip || (focussed && !t.focus) {
                 continue;
             }
             let result = panic::catch_unwind(|| {
@@ -100,9 +104,12 @@ mod tests {
                 errors.push(format!("{:?}", err));
             }
         }
-        assert!(errors.is_empty());
+        assert!(errors.is_empty(), "testcase(s) failed, see above");
         if focussed {
             assert!(false, "testcase(s) still focussed")
+        }
+        if skipped {
+            assert!(false, "testcase(s) still skipped")
         }
     }
 
