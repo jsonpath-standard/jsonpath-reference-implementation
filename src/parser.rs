@@ -4,119 +4,74 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use crate::matchers;
-use crate::path;
+pub use crate::ast::*;
 use crate::pest::Parser;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
 struct PathParser;
 
-pub fn parse(selector: &str) -> Result<impl path::Path, String> {
+pub fn parse(selector: &str) -> Result<Path, String> {
     let selector_rule = PathParser::parse(Rule::selector, selector)
         .map_err(|e| format!("{}", e))?
-        .next()
+        .nth(1)
         .unwrap();
 
-    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
-    for r in selector_rule.into_inner() {
-        match r.as_rule() {
-            Rule::rootSelector => ms.push(Box::new(matchers::RootSelector {})),
-
-            Rule::matcher => {
-                for m in parse_matcher(r) {
-                    ms.push(m)
-                }
-            }
-
-            _ => println!("r={:?}", r),
-        }
-    }
-
-    Ok(path::new(ms))
+    Ok(selector_rule
+        .into_inner()
+        .fold(Path::Root, |prev, r| match r.as_rule() {
+            Rule::matcher => Path::Sel(Box::new(prev), parse_selector(r)),
+            _ => panic!("invalid parse tree {:?}", r),
+        }))
 }
 
-fn parse_matcher(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
-    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
+fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Selector {
+    let r = matcher_rule.into_inner().next().unwrap();
+
+    match r.as_rule() {
+        Rule::wildcardedDotChild => Selector::DotWildcard,
+        Rule::namedDotChild => Selector::DotName(parse_child_name(r)),
+        Rule::union => Selector::Union(parse_union_indices(r)),
+        _ => panic!("invalid parse tree {:?}", r),
+    }
+}
+
+fn parse_child_name(matcher_rule: pest::iterators::Pair<Rule>) -> String {
+    let r = matcher_rule.into_inner().next().unwrap();
+
+    match r.as_rule() {
+        Rule::childName => r.as_str().to_owned(),
+        _ => panic!("invalid parse tree {:?}", r),
+    }
+}
+
+fn parse_union_indices(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<UnionElement> {
+    let mut res = Vec::new();
+
     for r in matcher_rule.into_inner() {
         match r.as_rule() {
-            Rule::wildcardedDotChild => ms.push(Box::new(matchers::WildcardedChild {})),
-
-            Rule::namedDotChild => {
-                for m in parse_dot_child_matcher(r) {
-                    ms.push(m)
-                }
-            }
-
-            Rule::union => {
-                for m in parse_union(r) {
-                    ms.push(m)
-                }
-            }
-
-            _ => (),
+            Rule::unionChild => res.append(&mut parse_union_child(r)),
+            Rule::unionArrayIndex => res.push(parse_union_array_index(r)),
+            _ => panic!("invalid parse tree {:?}", r),
         }
     }
-    ms
+    res
 }
 
-fn parse_dot_child_matcher(
-    matcher_rule: pest::iterators::Pair<Rule>,
-) -> Vec<Box<dyn matchers::Matcher>> {
-    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
-    for r in matcher_rule.into_inner() {
-        if let Rule::childName = r.as_rule() {
-            ms.push(Box::new(matchers::Child::new(r.as_str().to_owned())));
-        }
-    }
-    ms
+fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<UnionElement> {
+    matcher_rule
+        .into_inner()
+        .map(|r| match r.as_rule() {
+            Rule::doubleInner => UnionElement::Name(unescape(r.as_str())),
+            Rule::singleInner => UnionElement::Name(unescape_single(r.as_str())),
+            _ => panic!("invalid parse tree {:?}", r),
+        })
+        .collect()
 }
 
-fn parse_union(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
-    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
-    for r in matcher_rule.into_inner() {
-        match r.as_rule() {
-            Rule::unionChild => {
-                for m in parse_union_child(r) {
-                    ms.push(m)
-                }
-            }
-            Rule::unionArrayIndex => {
-                for m in parse_union_array_index(r) {
-                    ms.push(m)
-                }
-            }
-            _ => {}
-        }
-    }
-    vec![Box::new(matchers::Union::new(ms))]
-}
-
-fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<Box<dyn matchers::Matcher>> {
-    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
-    for r in matcher_rule.into_inner() {
-        match r.as_rule() {
-            Rule::doubleInner => {
-                ms.push(Box::new(matchers::Child::new(unescape(r.as_str()))));
-            }
-
-            Rule::singleInner => {
-                ms.push(Box::new(matchers::Child::new(unescape_single(r.as_str()))));
-            }
-
-            _ => (),
-        }
-    }
-    ms
-}
-
-fn parse_union_array_index(
-    matcher_rule: pest::iterators::Pair<Rule>,
-) -> Vec<Box<dyn matchers::Matcher>> {
-    let mut ms: Vec<Box<dyn matchers::Matcher>> = Vec::new();
+fn parse_union_array_index(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement {
     let i = matcher_rule.as_str().parse().unwrap();
-    ms.push(Box::new(matchers::ArrayIndex::new(i)));
-    ms
+    UnionElement::Index(i)
 }
 
 fn unescape(contents: &str) -> String {
