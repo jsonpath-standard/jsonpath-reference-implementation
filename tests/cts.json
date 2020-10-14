@@ -599,7 +599,7 @@
     "document": [0, 1, 2, 3],
 		"result": [2, 1, 0]
 	}, {
-		"name": "union array slice, larger negative step",
+    "name": "union array slice, larger negative step",
 		"selector": "$[::-2]",
     "document": [0, 1, 2, 3],
 		"result": [3, 1]
@@ -667,12 +667,12 @@
     "document": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 		"result": []
 	}, {
-		"name": "union array slice, default indices with empty array",
+    "name": "union array slice, default indices with empty array",
 		"selector": "$[:]",
     "document": [],
 		"result": []
 	}, {
-		"name": "union array slice, negative step with empty array",
+    "name": "union array slice, negative step with empty array",
 		"selector": "$[::-1]",
     "document": [],
 		"result": []
@@ -702,7 +702,7 @@
     "document": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 		"result": [9, 8, 7, 6, 5, 4, 3, 2, 1]
 	}, {
-		"name": "union array slice, excessively small to value with negative step",
+    "name": "union array slice, excessively small to value with negative step",
 		"selector": "$[3:-113667776004:-1]",
     "document": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 		"result": [3, 2, 1, 0]
