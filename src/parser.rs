@@ -6,7 +6,7 @@
 
 pub use crate::ast::*;
 use crate::pest::Parser;
-use slyce::{Index, Slice};
+use slyce::Slice;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -96,8 +96,8 @@ fn parse_union_array_slice(matcher_rule: pest::iterators::Pair<Rule>) -> UnionEl
     }
 
     UnionElement::Slice(Slice {
-        start: start.map(Index::from).unwrap_or_default(),
-        end: end.map(Index::from).unwrap_or_default(),
+        start: start.into(),
+        end: end.into(),
         step,
     })
 }
