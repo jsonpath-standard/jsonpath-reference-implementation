@@ -55,12 +55,12 @@ mod tests {
             let result = panic::catch_unwind(|| {
                 if t.invalid_selector {
                     println!(
-                        "testcase name = `{}`, selector = `{}`, expected invalid selector.",
+                        "testcase name = `{}`, selector = `{}`, expecting invalid selector.",
                         t.name, t.selector
                     );
                 } else {
                     println!(
-                        "testcase name = `{}`, selector = `{}`, document:\n{:#}\nexpected result = `{}`.",
+                        "testcase name = `{}`, selector = `{}`, document:\n{:#}\nexpecting result = `{}`.",
                         t.name, t.selector, t.document, t.result
                     );
                 }

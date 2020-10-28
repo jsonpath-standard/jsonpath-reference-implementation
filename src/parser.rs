@@ -7,6 +7,7 @@
 pub use crate::ast::*;
 use crate::pest::Parser;
 use slyce::Slice;
+use std::num::ParseIntError;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -18,23 +19,26 @@ pub fn parse(selector: &str) -> Result<Path, String> {
         .nth(1)
         .unwrap();
 
-    Ok(selector_rule
+    selector_rule
         .into_inner()
-        .fold(Path::Root, |prev, r| match r.as_rule() {
-            Rule::matcher => Path::Sel(Box::new(prev), parse_selector(r)),
+        .fold(Ok(Path::Root), |prev, r| match r.as_rule() {
+            Rule::matcher => Ok(Path::Sel(
+                Box::new(prev?),
+                parse_selector(r).map_err(|e| format!("{}", e))?,
+            )),
             _ => panic!("invalid parse tree {:?}", r),
-        }))
+        })
 }
 
-fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Selector {
+fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Result<Selector, ParseIntError> {
     let r = matcher_rule.into_inner().next().unwrap();
 
-    match r.as_rule() {
+    Ok(match r.as_rule() {
         Rule::wildcardedDotChild => Selector::DotWildcard,
         Rule::namedDotChild => Selector::DotName(parse_child_name(r)),
-        Rule::union => Selector::Union(parse_union_indices(r)),
+        Rule::union => Selector::Union(parse_union_indices(r)?),
         _ => panic!("invalid parse tree {:?}", r),
-    }
+    })
 }
 
 fn parse_child_name(matcher_rule: pest::iterators::Pair<Rule>) -> String {
@@ -46,16 +50,18 @@ fn parse_child_name(matcher_rule: pest::iterators::Pair<Rule>) -> String {
     }
 }
 
-fn parse_union_indices(matcher_rule: pest::iterators::Pair<Rule>) -> Vec<UnionElement> {
+fn parse_union_indices(
+    matcher_rule: pest::iterators::Pair<Rule>,
+) -> Result<Vec<UnionElement>, ParseIntError> {
     matcher_rule
         .into_inner()
         .map(|r| match r.as_rule() {
-            Rule::unionChild => parse_union_child(r),
+            Rule::unionChild => Ok(parse_union_child(r)),
             Rule::unionArraySlice => parse_union_array_slice(r),
             Rule::unionArrayIndex => parse_union_array_index(r),
             _ => panic!("invalid parse tree {:?}", r),
         })
-        .collect()
+        .collect::<Result<Vec<UnionElement>, ParseIntError>>()
 }
 
 fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement {
@@ -68,38 +74,42 @@ fn parse_union_child(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement 
     })
 }
 
-fn parse_union_array_index(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement {
-    let i = matcher_rule.as_str().parse().unwrap();
-    UnionElement::Index(i)
+fn parse_union_array_index(
+    matcher_rule: pest::iterators::Pair<Rule>,
+) -> Result<UnionElement, ParseIntError> {
+    let i = matcher_rule.as_str().parse()?;
+    Ok(UnionElement::Index(i))
 }
 
-fn parse_union_array_slice(matcher_rule: pest::iterators::Pair<Rule>) -> UnionElement {
+fn parse_union_array_slice(
+    matcher_rule: pest::iterators::Pair<Rule>,
+) -> Result<UnionElement, ParseIntError> {
     let mut start: Option<isize> = None;
     let mut end: Option<isize> = None;
     let mut step: Option<isize> = None;
     for r in matcher_rule.into_inner() {
         match r.as_rule() {
             Rule::sliceStart => {
-                start = Some(r.as_str().parse().unwrap());
+                start = Some(r.as_str().parse()?);
             }
 
             Rule::sliceEnd => {
-                end = Some(r.as_str().parse().unwrap());
+                end = Some(r.as_str().parse()?);
             }
 
             Rule::sliceStep => {
-                step = Some(r.as_str().parse().unwrap());
+                step = Some(r.as_str().parse()?);
             }
 
             _ => panic!("invalid parse tree {:?}", r),
         }
     }
 
-    UnionElement::Slice(Slice {
+    Ok(UnionElement::Slice(Slice {
         start: start.into(),
         end: end.into(),
         step,
-    })
+    }))
 }
 
 fn unescape(contents: &str) -> String {

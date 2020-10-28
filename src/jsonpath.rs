@@ -28,6 +28,7 @@ pub fn parse(selector: &str) -> Result<Path, SyntaxError> {
     Ok(Path(p))
 }
 
+#[derive(Debug)]
 pub struct Path(ast::Path);
 
 impl Path {

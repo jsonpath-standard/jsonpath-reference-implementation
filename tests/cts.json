@@ -511,6 +511,10 @@
     "document": ["first", "second"],
     "result": []
   }, {
+    "name": "union array access, overflowing index",
+    "selector": "$[231584178474632390847141970017375815706539969331281128078915168015826259279872]",
+    "invalid_selector": true
+  }, {
     "name": "union array access, negative",
     "selector": "$[-1]",
     "document": ["first", "second"],
@@ -716,5 +720,29 @@
 		"selector": "$[-1:-10:-113667776004]",
     "document": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 		"result": [9]
-	}
+  }, {
+    "name": "union array slice, overflowing to value",
+    "selector": "$[2:231584178474632390847141970017375815706539969331281128078915168015826259279872]",
+    "invalid_selector": true
+    }, {
+    "name": "union array slice, underflowing from value",
+    "selector": "$[-231584178474632390847141970017375815706539969331281128078915168015826259279872:1]",
+    "invalid_selector": true
+    }, {
+    "name": "union array slice, overflowing from value with negative step",
+    "selector": "$[231584178474632390847141970017375815706539969331281128078915168015826259279872:0:-1]",
+    "invalid_selector": true
+    }, {
+    "name": "union array slice, underflowing to value with negative step",
+    "selector": "$[3:-231584178474632390847141970017375815706539969331281128078915168015826259279872:-1]",
+    "invalid_selector": true
+    }, {
+    "name": "union array slice, overflowing step",
+    "selector": "$[1:10:231584178474632390847141970017375815706539969331281128078915168015826259279872]",
+    "invalid_selector": true
+    }, {
+    "name": "union array slice, underflowing step",
+    "selector": "$[-1:-10:-231584178474632390847141970017375815706539969331281128078915168015826259279872]",
+    "invalid_selector": true
+  }
 ]}
