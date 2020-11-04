@@ -5,6 +5,8 @@
  */
 
 use serde_json::Value;
+use slyce::Slice;
+use std::iter;
 
 /// A path is a tree of selector nodes.
 ///
@@ -57,6 +59,7 @@ pub enum Selector {
 #[derive(Debug)]
 pub enum UnionElement {
     Name(String),
+    Slice(Slice),
     Index(i64),
 }
 
@@ -89,6 +92,13 @@ impl UnionElement {
     pub fn get<'a>(&self, v: &'a Value) -> Iter<'a> {
         match self {
             UnionElement::Name(name) => Box::new(v.get(name).into_iter()),
+            UnionElement::Slice(slice) => {
+                if let Value::Array(arr) = v {
+                    Box::new(slice.apply(arr))
+                } else {
+                    Box::new(iter::empty())
+                }
+            }
             UnionElement::Index(num) => Box::new(v.get(abs_index(*num, v)).into_iter()),
         }
     }
