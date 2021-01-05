@@ -39,7 +39,8 @@ mod tests {
 
     #[test]
     fn compliance_test_suite() {
-        let cts_json = fs::read_to_string("tests/cts.json").expect("failed to read cts.json");
+        let cts_json = fs::read_to_string("jsonpath-compliance-test-suite/cts.json")
+            .expect("failed to read cts.json");
 
         let suite: TestSuite =
             serde_json::from_str(&cts_json).expect("failed to deserialize cts.json");
