@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+use by_address::ByAddress;
 use serde_json::Value;
 use slyce::Slice;
+use std::collections::HashSet;
 use std::iter;
 
 /// A path is a tree of selector nodes.
@@ -77,7 +79,9 @@ impl Path {
 impl Selector {
     pub fn find<'a>(&'a self, input: &'a Value) -> Iter<'a> {
         match self {
-            Selector::Union(indices) => Box::new(indices.iter().flat_map(move |i| i.get(input))),
+            Selector::Union(indices) => {
+                unique_nodes(Box::new(indices.iter().flat_map(move |i| i.get(input))))
+            }
             Selector::DotName(name) => Box::new(input.get(name).into_iter()),
             Selector::DotWildcard => match input {
                 Value::Object(m) => Box::new(m.values()),
@@ -86,6 +90,18 @@ impl Selector {
             },
         }
     }
+}
+
+fn unique_nodes(i: Iter) -> Iter {
+    let mut seen: HashSet<ByAddress<&Value>> = HashSet::new();
+    let mut result = vec![];
+    for j in i {
+        if !&seen.contains(&ByAddress(j)) {
+            seen.insert(ByAddress(j));
+            result.push(j)
+        }
+    }
+    Box::new(result.into_iter())
 }
 
 impl UnionElement {
