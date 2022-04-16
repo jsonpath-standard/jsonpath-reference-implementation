@@ -16,10 +16,13 @@ struct PathParser;
 pub fn parse(selector: &str) -> Result<Path, String> {
     let selector_rule = PathParser::parse(Rule::selector, selector)
         .map_err(|e| format!("{}", e))?
-        .nth(1)
+        .nth(0)
         .unwrap();
 
     selector_rule
+        .into_inner()
+        .nth(1) // skip over Rule::selector
+        .unwrap()
         .into_inner()
         .fold(Ok(Path::Root), |prev, r| match r.as_rule() {
             Rule::matcher => Ok(Path::Sel(

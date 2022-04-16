@@ -1,7 +1,7 @@
-selector = _{ SOI ~ rootSelector ~ matchers ~ EOI }
+selector = ${ SOI ~ rootSelector ~ matchers ~ EOI }
 
 matchers = ${ matcher* }
-rootSelector = { "$" }
+rootSelector = @{ "$" }
 
 matcher = !{ dotChild | union }
 
