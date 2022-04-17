@@ -16,7 +16,7 @@ struct PathParser;
 pub fn parse(selector: &str) -> Result<Path, String> {
     let selector_rule = PathParser::parse(Rule::selector, selector)
         .map_err(|e| format!("{}", e))?
-        .nth(0)
+        .next()
         .unwrap();
 
     selector_rule
