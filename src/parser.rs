@@ -21,7 +21,7 @@ pub fn parse(selector: &str) -> Result<Path, String> {
 
     selector_rule
         .into_inner()
-        .nth(1) // skip over Rule::selector
+        .nth(1) // skip over Rule::rootSelector
         .unwrap()
         .into_inner()
         .fold(Ok(Path::Root), |prev, r| match r.as_rule() {
