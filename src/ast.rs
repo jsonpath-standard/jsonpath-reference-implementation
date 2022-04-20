@@ -77,7 +77,7 @@ impl Path {
 impl Selector {
     pub fn find<'a>(&'a self, input: &'a Value) -> Iter<'a> {
         match self {
-            Selector::Union(indices) => Box::new(indices.iter().flat_map(move |i| i.get(input))),
+            Selector::Union(indices) => Box::new(indices.iter().flat_map(move |i| i.find(input))),
             Selector::DotName(name) => Box::new(input.get(name).into_iter()),
             Selector::DotWildcard => match input {
                 Value::Object(m) => Box::new(m.values()),
@@ -89,7 +89,7 @@ impl Selector {
 }
 
 impl UnionElement {
-    pub fn get<'a>(&self, v: &'a Value) -> Iter<'a> {
+    pub fn find<'a>(&self, v: &'a Value) -> Iter<'a> {
         match self {
             UnionElement::Name(name) => Box::new(v.get(name).into_iter()),
             UnionElement::Slice(slice) => {
