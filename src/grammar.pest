@@ -32,16 +32,16 @@ doubleInner = @{ doubleChar* }
 doubleChar = {
     !("\"" | "\\" | '\u{00}'..'\u{1F}') ~ ANY
     | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
-    | "\\" ~ ("u" ~ upperHexDigit{4})
+    | "\\" ~ ("u" ~ hexDigit{4})
 }
-upperHexDigit = _{ ASCII_DIGIT | "A" | "B" | "C" | "D" | "E" | "F" }
+hexDigit = _{ ASCII_DIGIT | "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f" }
 
 singleQuotedString = _{ "'" ~ singleInner ~ "'" }
 singleInner = @{ singleChar* }
 singleChar = {
     !("'" | "\\" | '\u{00}'..'\u{1F}') ~ ANY
     | "\\" ~ ("'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
-    | "\\" ~ ("u" ~ upperHexDigit{4})
+    | "\\" ~ ("u" ~ hexDigit{4})
 }
 
 WHITESPACE = _{ " " }
