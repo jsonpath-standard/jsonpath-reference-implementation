@@ -90,10 +90,13 @@ mod tests {
                         assert!(false, "find failed") // should not happen
                     }
                 } else {
-                    if !t.invalid_selector {
+                    if t.invalid_selector {
+                        // print failure message
+                        println!("{}: parsing `{}` failed with: {}", t.name, t.selector, path.err().expect("should be an error"));
+                    } else {
                         assert!(
                             path.is_ok(),
-                            "{}: parsing {} should have succeeded but failed: {}",
+                            "{}: parsing `{}` should have succeeded but failed: {}",
                             t.name,
                             t.selector,
                             path.err().expect("should be an error")

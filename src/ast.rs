@@ -54,6 +54,9 @@ pub enum Selector {
     Union(Vec<UnionElement>),
     DotName(String),
     DotWildcard,
+    DescendantDotName(String),
+    DescendantDotWildcard,
+    DescendantUnionElement(UnionElement),
 }
 
 #[derive(Debug)]
@@ -85,6 +88,20 @@ impl Selector {
                 Value::Array(a) => Box::new(a.iter()),
                 _ => Box::new(std::iter::empty()),
             },
+            Selector::DescendantDotName(name) => Self::traverse(input, move |n: &'a Value| Box::new(n.get(name).into_iter())),
+            Selector::DescendantDotWildcard => Self::traverse(input, move |n: &'a Value| Box::new(iter::once(n))),
+            Selector::DescendantUnionElement(element) => Self::traverse(input, move |n: &'a Value| element.find(n)),
+        }
+    }
+
+    // traverse applies the given closure to all the descendants of the input value and
+    // returns a nodelist.
+    fn traverse<'a, F>(input: &'a Value, f: F) -> NodeList<'a>
+    where F: Fn(&'a Value) -> NodeList<'a> + Copy + 'a {
+        match input {
+            Value::Object(m) => Box::new(m.into_iter().flat_map(move |(_k, v)| (&f)(v).chain(Self::traverse::<'a>(v, f)))),
+            Value::Array(a) => Box::new(a.iter().flat_map(move |v| (&f)(v).chain(Self::traverse::<'a>(v, f)))),
+            _ => Box::new(std::iter::empty()),
         }
     }
 }

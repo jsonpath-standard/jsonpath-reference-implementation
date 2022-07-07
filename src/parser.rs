@@ -40,6 +40,7 @@ fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Result<Selector,
         Rule::wildcardedDotChild => Selector::DotWildcard,
         Rule::namedDotChild => Selector::DotName(parse_child_name(r)),
         Rule::union => Selector::Union(parse_union_indices(r)?),
+        Rule::descendant => parse_descendant(r)?, 
         _ => panic!("invalid parse tree {:?}", r),
     })
 }
@@ -113,6 +114,19 @@ fn parse_union_array_slice(
         end: end.into(),
         step,
     }))
+}
+
+fn parse_descendant(matcher_rule: pest::iterators::Pair<Rule>) -> Result<Selector, ParseIntError> {
+    let r = matcher_rule.into_inner().next().unwrap();
+
+    Ok(match r.as_rule() {
+        Rule::childName => Selector::DescendantDotName(r.as_str().to_owned()),
+        Rule::wildcard => Selector::DescendantDotWildcard,
+        Rule::unionChild => Selector::DescendantUnionElement(parse_union_child(r)),
+        Rule::unionArraySlice => Selector::DescendantUnionElement(parse_union_array_slice(r)?),
+        Rule::unionArrayIndex => Selector::DescendantUnionElement(parse_union_array_index(r)?),
+        _ => panic!("invalid descendant {:?}", r),
+    })
 }
 
 fn unescape(contents: &str) -> String {
