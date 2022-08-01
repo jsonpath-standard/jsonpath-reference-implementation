@@ -63,10 +63,11 @@ pub enum UnionElement {
     Index(i64),
 }
 
-type Iter<'a> = Box<dyn Iterator<Item = &'a Value> + 'a>;
+// NodeList is an iterator over references to Values named after the Nodelist term in the spec.
+type NodeList<'a> = Box<dyn Iterator<Item = &'a Value> + 'a>;
 
 impl Path {
-    pub fn find<'a>(&'a self, input: &'a Value) -> Iter<'a> {
+    pub fn find<'a>(&'a self, input: &'a Value) -> NodeList<'a> {
         match self {
             Path::Root => Box::new(std::iter::once(input)),
             Path::Sel(left, sel) => Box::new(left.find(input).flat_map(move |v| sel.find(v))),
@@ -75,7 +76,7 @@ impl Path {
 }
 
 impl Selector {
-    pub fn find<'a>(&'a self, input: &'a Value) -> Iter<'a> {
+    pub fn find<'a>(&'a self, input: &'a Value) -> NodeList<'a> {
         match self {
             Selector::Union(indices) => Box::new(indices.iter().flat_map(move |i| i.find(input))),
             Selector::DotName(name) => Box::new(input.get(name).into_iter()),
@@ -89,7 +90,7 @@ impl Selector {
 }
 
 impl UnionElement {
-    pub fn find<'a>(&self, v: &'a Value) -> Iter<'a> {
+    pub fn find<'a>(&self, v: &'a Value) -> NodeList<'a> {
         match self {
             UnionElement::Name(name) => Box::new(v.get(name).into_iter()),
             UnionElement::Slice(slice) => {
