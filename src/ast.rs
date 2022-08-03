@@ -109,11 +109,11 @@ impl Selector {
         match input {
             Value::Object(m) => Box::new(
                 m.into_iter()
-                    .flat_map(move |(_k, v)| (&f)(v).chain(Self::traverse::<'a>(v, f))),
+                    .flat_map(move |(_k, v)| f(v).chain(Self::traverse::<'a>(v, f))),
             ),
             Value::Array(a) => Box::new(
                 a.iter()
-                    .flat_map(move |v| (&f)(v).chain(Self::traverse::<'a>(v, f))),
+                    .flat_map(move |v| f(v).chain(Self::traverse::<'a>(v, f))),
             ),
             _ => Box::new(std::iter::empty()),
         }
