@@ -92,7 +92,12 @@ mod tests {
                 } else {
                     if t.invalid_selector {
                         // print failure message
-                        println!("{}: parsing `{}` failed with: {}", t.name, t.selector, path.err().expect("should be an error"));
+                        println!(
+                            "{}: parsing `{}` failed with: {}",
+                            t.name,
+                            t.selector,
+                            path.err().expect("should be an error")
+                        );
                     } else {
                         assert!(
                             path.is_ok(),

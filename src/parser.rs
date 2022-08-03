@@ -40,7 +40,7 @@ fn parse_selector(matcher_rule: pest::iterators::Pair<Rule>) -> Result<Selector,
         Rule::wildcardedDotChild => Selector::DotWildcard,
         Rule::namedDotChild => Selector::DotName(parse_child_name(r)),
         Rule::union => Selector::Union(parse_union_indices(r)?),
-        Rule::descendant => parse_descendant(r)?, 
+        Rule::descendant => parse_descendant(r)?,
         _ => panic!("invalid parse tree {:?}", r),
     })
 }
