@@ -94,9 +94,9 @@ impl Selector {
             Selector::DescendantDotWildcard => {
                 Self::traverse(input, move |n: &'a Value| Box::new(iter::once(n)))
             }
-            Selector::DescendantUnion(indices) => {
-                Self::traverse(input, move |n: &'a Value| Box::new(indices.iter().flat_map(move |i| i.find(n))))
-            }
+            Selector::DescendantUnion(indices) => Self::traverse(input, move |n: &'a Value| {
+                Box::new(indices.iter().flat_map(move |i| i.find(n)))
+            }),
         }
     }
 
