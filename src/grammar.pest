@@ -28,7 +28,7 @@ sliceEnd = @{ integer }
 sliceStep = @{ integer }
 
 descendant = ${ ".." ~ descendantVariant }
-descendantVariant = _{ childName | wildcard | "[" ~ unionElement ~ "]" }
+descendantVariant = _{ childName | wildcard |  "[" ~ wildcard ~ "]" | "[" ~ unionElement ~ "]" }
 wildcard = { "*" }
 
 doubleQuotedString = _{ "\"" ~ doubleInner ~ "\"" }
