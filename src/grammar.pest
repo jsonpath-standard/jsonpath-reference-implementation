@@ -3,7 +3,7 @@ selector = ${ SOI ~ rootSelector ~ matchers ~ EOI }
 matchers = ${ matcher* }
 rootSelector = @{ "$" }
 
-matcher = !{ dotChild | union }
+matcher = !{ dotChild | union | wildcardedIndex | descendant }
 
 dotChild = _{ wildcardedDotChild | namedDotChild }
 wildcardedDotChild = { ".*" }
@@ -17,7 +17,7 @@ char = {
     | '\u{80}'..'\u{10FFFF}'
 }
 
-union =  { "[" ~ unionElement ~ ("," ~ unionElement)* ~ "]" }
+union =  !{ "[" ~ unionElement ~ ("," ~ unionElement)* ~ "]" }
 unionElement = _{ unionChild | unionArraySlice | unionArrayIndex }
 unionChild = ${ doubleQuotedString | singleQuotedString }
 unionArrayIndex = @{ integer }
@@ -26,6 +26,12 @@ unionArraySlice = { sliceStart ? ~ ":" ~ sliceEnd ? ~ ( ":" ~ sliceStep ? ) ? }
 sliceStart = @{ integer }
 sliceEnd = @{ integer }
 sliceStep = @{ integer }
+
+wildcardedIndex = { "[" ~ "*" ~ "]" }
+
+descendant = ${ ".." ~ descendantVariant }
+descendantVariant = _{ childName | wildcard |  "[" ~ wildcard ~ "]" | union }
+wildcard = { "*" }
 
 doubleQuotedString = _{ "\"" ~ doubleInner ~ "\"" }
 doubleInner = @{ doubleChar* }
