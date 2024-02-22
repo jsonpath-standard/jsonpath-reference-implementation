@@ -1,6 +1,6 @@
 # JSON Path Reference Implementation
 
-**WORK IN PROGRESS**
+**STALLED** - See this [blog post](https://underlap.org/jsonpath-from-blog-post-to-rfc-in-17-years) for details. If you want to take this implementation forward, please feel free to fork it or contact @glyn.
 
 This Reference Implementation follows, and usually lags behind, the [internet draft](https://jsonpath-standard.github.io/internet-draft/).
 
